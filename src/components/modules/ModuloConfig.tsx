@@ -1,5 +1,5 @@
 "use client";
-import confetti from "canvas-confetti";
+
 import { useState, useEffect } from "react";
 import { Save, Lock, Unlock } from "lucide-react";
 import { updateConfig, atualizarLivro, registrarAtividade} from "@/lib/db";
@@ -165,13 +165,7 @@ function NotasFinais({ livro }: { livro: Livro }) {
     await atualizarLivro(livro.id, { notaJovanna: notaJ, notaLeticia: notaL, status: "concluido" });
     setSalvando(false);
     setSalvo(true);
-
-    confetti({
-      particleCount: 150,
-      spread: 90,
-      origin: { y: 0.6 },
-      colors: ["#e07a5f", "#81b29a", "#fdf0ec"],
-    });
+;
 
     setTimeout(() => setSalvo(false), 2000);
   }
