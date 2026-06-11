@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rose:   #e07a5f;
+  --sage:   #81b29a;
+  --cream:  #fdf8f5;
+  --ink:    #2d2d2d;
+  --muted:  #9a8f8f;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--ink);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+}
+
+.btn-primary {
+  @apply bg-[#e07a5f] text-white font-medium py-2.5 px-5 rounded-xl
+         hover:bg-[#c45f44] active:scale-95 transition-all duration-150;
+}
+
+.btn-secondary {
+  @apply bg-[#81b29a] text-white font-medium py-2.5 px-5 rounded-xl
+         hover:bg-[#5f8f7a] active:scale-95 transition-all duration-150;
+}
+
+.btn-ghost {
+  @apply border border-gray-200 text-gray-600 font-medium py-2.5 px-5 rounded-xl
+         hover:bg-gray-50 active:scale-95 transition-all duration-150;
+}
+
+.input {
+  @apply w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
+         focus:outline-none focus:ring-2 focus:ring-[#e07a5f]/30 focus:border-[#e07a5f]
+         transition-all duration-150 bg-white;
+}
+
+.textarea {
+  @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
+         focus:outline-none focus:ring-2 focus:ring-[#e07a5f]/30 focus:border-[#e07a5f]
+         transition-all duration-150 bg-white resize-none;
+}
+
+.tab-active {
+  @apply text-[#e07a5f] border-b-2 border-[#e07a5f] font-medium;
+}
+
+.badge-rose { @apply text-xs bg-[#fdf0ec] text-[#e07a5f] px-2.5 py-1 rounded-full font-medium; }
+.badge-sage { @apply text-xs bg-[#eef5f1] text-[#5f8f7a] px-2.5 py-1 rounded-full font-medium; }
+.badge-gray { @apply text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full font-medium; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e0d9d5; border-radius: 3px; }
