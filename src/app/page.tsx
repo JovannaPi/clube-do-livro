@@ -7,31 +7,33 @@ import { useUsuario } from "@/hooks/useUsuario";
 import NotificacaoSino from "@/components/modules/NotificacaoSino";
 import type { ConfigApp, Livro } from "@/types";
 
-// Fundo
 import { FundoFrases } from "@/components/modules/Fundo_Frases";
-
-// Módulos
-import ModuloBiblioteca  from "@/components/modules/ModuloBiblioteca";
-import ModuloDiario      from "@/components/modules/ModuloDiario";
-import ModuloSecreto     from "@/components/modules/ModuloSecreto";
-import ModuloDiscussao   from "@/components/modules/ModuloDiscussao";
+import ModuloBiblioteca   from "@/components/modules/ModuloBiblioteca";
+import ModuloDiario       from "@/components/modules/ModuloDiario";
+import ModuloSecreto      from "@/components/modules/ModuloSecreto";
+import ModuloDiscussao    from "@/components/modules/ModuloDiscussao";
 import ModuloEstatisticas from "@/components/modules/ModuloEstatisticas";
-import ModuloPremiacao   from "@/components/modules/ModuloPremiacao";
-import ModuloMemorias    from "@/components/modules/ModuloMemorias";
-import ModuloConfig      from "@/components/modules/ModuloConfig";
+import ModuloPremiacao    from "@/components/modules/ModuloPremiacao";
+import ModuloMemorias     from "@/components/modules/ModuloMemorias";
+import ModuloConfig       from "@/components/modules/ModuloConfig";
 
 const TABS = [
-  { id: "biblioteca",   label: "Biblioteca",   icon: BookMarked },
-  { id: "diario",       label: "Diário",        icon: PenLine },
-  { id: "secreto",      label: "Secreto",       icon: Lock },
-  { id: "discussao",    label: "Discussão",     icon: MessageCircle },
-  { id: "stats",        label: "Estatísticas",  icon: BarChart2 },
-  { id: "premiacao",    label: "Premiações",    icon: Trophy },
-  { id: "memorias",     label: "Memórias",      icon: Heart },
-  { id: "config",       label: "Config",        icon: Settings },
+  { id: "biblioteca",  label: "Biblioteca",  icon: BookMarked },
+  { id: "diario",      label: "Diário",       icon: PenLine },
+  { id: "secreto",     label: "Secreto",      icon: Lock },
+  { id: "discussao",   label: "Discussão",    icon: MessageCircle },
+  { id: "stats",       label: "Estatísticas", icon: BarChart2 },
+  { id: "premiacao",   label: "Premiações",   icon: Trophy },
+  { id: "memorias",    label: "Memórias",     icon: Heart },
+  { id: "config",      label: "Config",       icon: Settings },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
+
+const COR = {
+  jovanna: { primary: "#e07a5f", hover: "#c45f44", bg: "#fdf0ec", initial: "J" },
+  leticia: { primary: "#81b29a", hover: "#5f8f7a", bg: "#eef5f1", initial: "L" },
+};
 
 export default function Home() {
   const [tab, setTab] = useState<TabId>("biblioteca");
@@ -41,13 +43,19 @@ export default function Home() {
   const [isDark, setIsDark] = useState(false);
   const { usuario, setUsuario } = useUsuario();
 
+  const cor = COR[usuario];
+
+  // Aplica data-usuario no <html> para as CSS vars
+  useEffect(() => {
+    document.documentElement.setAttribute("data-usuario", usuario);
+  }, [usuario]);
+
   useEffect(() => {
     const unsub1 = listenConfig(setConfig);
     const unsub2 = listenLivros(setLivros);
     return () => { unsub1(); unsub2(); };
   }, []);
 
-  // Tema escuro
   useEffect(() => {
     const root = window.document.documentElement;
     if (isDark) {
@@ -61,9 +69,7 @@ export default function Home() {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("tema-clube-livro");
-    if (savedTheme === "dark") {
-      setIsDark(true);
-    }
+    if (savedTheme === "dark") setIsDark(true);
   }, []);
 
   const livroAtual = livros.find(l => l.id === config?.livroAtualId);
@@ -76,12 +82,19 @@ export default function Home() {
       <header className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 sticky top-0 z-30 transition-colors duration-200">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-[#e07a5f]" />
+            {/* Avatar da usuária ativa */}
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 transition-colors duration-300"
+              style={{ backgroundColor: cor.primary }}
+            >
+              {cor.initial}
+            </div>
             <h1 className="font-serif text-lg font-semibold text-[#2d2d2d] dark:text-zinc-100 flex items-center gap-1">
               {config?.nomeclube ?? "Clube do Livro"}
               <button
                 onClick={() => setShowMensagem(true)}
                 className="hover:scale-125 transition-transform duration-200 cursor-pointer"
+                style={{ color: cor.primary }}
               >
                 ♥
               </button>
@@ -95,22 +108,22 @@ export default function Home() {
                 <button
                   key={u}
                   onClick={() => setUsuario(u)}
-                  className={`px-3 py-1 rounded-lg transition-all font-medium capitalize ${
+                  className="px-3 py-1 rounded-lg transition-all font-medium capitalize"
+                  style={
                     usuario === u
-                      ? "bg-[#e07a5f] text-white shadow-sm"
-                      : "text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-200"
-                  }`}
+                      ? { backgroundColor: COR[u].primary, color: "white" }
+                      : {}
+                  }
                 >
                   {u === "jovanna" ? "Jovanna" : "Leticia"}
                 </button>
               ))}
             </div>
 
-            
-            {/* Sino de notificações */}
+            {/* Sino */}
             <NotificacaoSino usuario={usuario} />
 
-            {/* Botão de tema */}
+            {/* Botão tema */}
             <button
               onClick={() => setIsDark(!isDark)}
               className="p-2.5 rounded-xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors duration-200 shadow-sm"
@@ -121,7 +134,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Citação do dia */}
+        {/* Citação */}
         {config?.citacaoFavorita && (
           <div className="max-w-3xl mx-auto px-4 pb-2">
             <p className="text-xs text-center text-[#9a8f8f] dark:text-zinc-400 italic">&ldquo;{config.citacaoFavorita}&rdquo;</p>
@@ -132,7 +145,10 @@ export default function Home() {
       {/* Modal mensagem carinhosa */}
       {showMensagem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-[#e07a5f]/30 relative">
+          <div
+            className="bg-white dark:bg-zinc-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl relative"
+            style={{ border: `2px solid ${cor.primary}4d` }}
+          >
             <p className="text-4xl">💌</p>
             <p className="font-serif text-lg text-[#2d2d2d] dark:text-zinc-100 leading-relaxed">
               Feliz Dia das Namoradas, meu bem. <br/><br/>
@@ -141,7 +157,8 @@ export default function Home() {
             </p>
             <button
               onClick={() => setShowMensagem(false)}
-              className="bg-[#e07a5f] hover:bg-[#c45f44] text-white py-3 px-6 rounded-xl font-bold transition-colors"
+              className="text-white py-3 px-6 rounded-xl font-bold transition-colors"
+              style={{ backgroundColor: cor.primary }}
             >
               Fechar
             </button>
@@ -156,11 +173,12 @@ export default function Home() {
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-all ${
+              className="flex flex-col items-center gap-0.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-all"
+              style={
                 tab === id
-                  ? "border-[#e07a5f] text-[#e07a5f]"
-                  : "border-transparent text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300"
-              }`}
+                  ? { borderColor: cor.primary, color: cor.primary }
+                  : { borderColor: "transparent" }
+              }
             >
               <Icon size={16} />
               {label}

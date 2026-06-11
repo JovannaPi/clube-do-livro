@@ -8,6 +8,20 @@
   --cream:  #fdf8f5;
   --ink:    #2d2d2d;
   --muted:  #9a8f8f;
+
+  /* Cor dinâmica — padrão Jovanna */
+  --cor-usuario:        #e07a5f;
+  --cor-usuario-hover:  #c45f44;
+  --cor-usuario-bg:     #fdf0ec;
+  --cor-usuario-ring:   #e07a5f4d;
+}
+
+/* Tema Leticia */
+[data-usuario="leticia"] {
+  --cor-usuario:        #81b29a;
+  --cor-usuario-hover:  #5f8f7a;
+  --cor-usuario-bg:     #eef5f1;
+  --cor-usuario-ring:   #81b29a4d;
 }
 
 body {
@@ -21,8 +35,11 @@ body {
 }
 
 .btn-primary {
-  @apply bg-[#e07a5f] text-white font-medium py-2.5 px-5 rounded-xl
-         hover:bg-[#c45f44] active:scale-95 transition-all duration-150;
+  background-color: var(--cor-usuario);
+  @apply text-white font-medium py-2.5 px-5 rounded-xl active:scale-95 transition-all duration-150;
+}
+.btn-primary:hover {
+  background-color: var(--cor-usuario-hover);
 }
 
 .btn-secondary {
@@ -37,18 +54,27 @@ body {
 
 .input {
   @apply w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-         focus:outline-none focus:ring-2 focus:ring-[#e07a5f]/30 focus:border-[#e07a5f]
-         transition-all duration-150 bg-white;
+         focus:outline-none transition-all duration-150 bg-white;
+  --tw-ring-color: var(--cor-usuario-ring);
+}
+.input:focus {
+  border-color: var(--cor-usuario);
+  box-shadow: 0 0 0 2px var(--cor-usuario-ring);
 }
 
 .textarea {
   @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
-         focus:outline-none focus:ring-2 focus:ring-[#e07a5f]/30 focus:border-[#e07a5f]
-         transition-all duration-150 bg-white resize-none;
+         focus:outline-none transition-all duration-150 bg-white resize-none;
+}
+.textarea:focus {
+  border-color: var(--cor-usuario);
+  box-shadow: 0 0 0 2px var(--cor-usuario-ring);
 }
 
 .tab-active {
-  @apply text-[#e07a5f] border-b-2 border-[#e07a5f] font-medium;
+  color: var(--cor-usuario);
+  border-bottom: 2px solid var(--cor-usuario);
+  @apply font-medium;
 }
 
 .badge-rose { @apply text-xs bg-[#fdf0ec] text-[#e07a5f] px-2.5 py-1 rounded-full font-medium; }
@@ -59,3 +85,8 @@ body {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #e0d9d5; border-radius: 3px; }
+
+/* Transição suave ao trocar usuário */
+header, nav, .btn-primary {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
