@@ -508,8 +508,8 @@ function Estante({ livros, lidos, lendo, queroLer, favoritos, mediaNotas, totalP
                 <div style={{ fontSize: 12, fontWeight: 700, color: textSecondary, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Sua Avaliação</div>
                 <div style={{ display: "flex", gap: 6 }}>
                   {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                    <button key={n} onClick={() => { async function rate() { await updateDoc(doc(db, "estante_livros", livroAberto.id), { nota: n }); setLivroAberto({ ...livroAberto, nota: n }); }; rate(); }}
-                      style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: n <= (livroAberto.nota ?? 0) ? "#f59e0b" : (isDark ? "#1f1b2e" : "#f3f4f6"), color: n <= (livroAberto.nota ?? 0) ? "white" : textSecondary, fontSize: 13, fontWeight: 800, cursor: "pointer", transition: "all 0.1s" }}>
+                    <button key={n} onClick={() => { async function rate() { await updateDoc(doc(db, "estante_livros", livroAberto!.id), { nota: n }); setLivroAberto!({ ...livroAberto!, nota: n }); }; rate(); }}
+                      style={{ flex: 1, padding: "10px 0", borderRadius: 10, border: "none", background: n <= (livroAberto!.nota ?? 0) ? "#f59e0b" : (isDark ? "#1f1b2e" : "#f3f4f6"), color: n <= (livroAberto!.nota ?? 0) ? "white" : textSecondary, fontSize: 13, fontWeight: 800, cursor: "pointer", transition: "all 0.1s" }}>
                       {n}
                     </button>
                   ))}
