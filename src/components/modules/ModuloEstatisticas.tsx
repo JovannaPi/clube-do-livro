@@ -99,6 +99,18 @@ export default function ModuloEstatisticas({ livros, config }: Props) {
         </div>
       </section>
 
+      {/* Gêneros lidos */}
+      {Object.keys(generosMap).length > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Gêneros lidos</h2>
+          <div className="card p-5 space-y-3">
+            {Object.entries(generosMap).sort((a, b) => b[1] - a[1]).map(([genero, qtd]) => (
+              <SugestaoBar key={genero} nome={genero} qtd={qtd} total={concluidos.length} cor="#e07a5f" />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Sugestões */}
       <section>
         <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Sugestões</h2>

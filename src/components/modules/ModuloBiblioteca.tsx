@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2, Repeat, XCircle, RotateCcw } from "lucide-react";
+import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2, Repeat, XCircle, RotateCcw, Search } from "lucide-react";
 import { salvarLivro, atualizarLivro, updateConfig, excluirLivro, registrarAtividade } from "@/lib/db";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -30,12 +30,18 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   const [livroSorteado, setLivroSorteado] = useState<Livro | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Livro>>({});
+  const [busca, setBusca] = useState("");
 
-  const planejados  = livros.filter(l => l.status === "planejado");
-  const lendo       = livros.filter(l => l.status === "lendo");
-  const trocar      = livros.filter(l => l.status === "trocar");
-  const concluidos  = livros.filter(l => l.status === "concluido");
-  const abandonados = livros.filter(l => l.status === "abandonado");
+  const buscaNorm = busca.trim().toLowerCase();
+  const filtrar = (lista: Livro[]) => buscaNorm
+    ? lista.filter(l => l.titulo.toLowerCase().includes(buscaNorm) || l.autor?.toLowerCase().includes(buscaNorm))
+    : lista;
+
+  const planejados  = filtrar(livros.filter(l => l.status === "planejado"));
+  const lendo       = filtrar(livros.filter(l => l.status === "lendo"));
+  const trocar      = filtrar(livros.filter(l => l.status === "trocar"));
+  const concluidos  = filtrar(livros.filter(l => l.status === "concluido"));
+  const abandonados = filtrar(livros.filter(l => l.status === "abandonado"));
 
   function jaLeu(livro: Livro, u: UserId) {
     return u === "jovanna" ? livro.notaJovanna != null : livro.notaLeticia != null;
@@ -112,7 +118,19 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   return (
     <div className="space-y-6">
 
+      {/* Busca */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300" />
+        <input
+          className="input pl-10"
+          placeholder="Buscar por título ou autor..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+        />
+      </div>
+
       {/* Roleta */}
+      {!buscaNorm && (
       <section className="card p-6 space-y-4" style={{ background: `linear-gradient(135deg, ${cor.bg}, white)`, border: `2px solid ${cor.border}` }}>
         <div className="flex items-center gap-2 justify-center text-center">
           <Sparkles style={{ color: cor.primary }} className="animate-pulse" size={24} />
@@ -153,6 +171,7 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
           </div>
         )}
       </section>
+      )}
 
       {/* Lendo agora — uma card por pessoa que está lendo */}
       {lendo.length > 0 && (
@@ -308,6 +327,10 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
         <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
           <div className="card w-full max-w-md p-6 space-y-3 bg-white max-h-[85vh] overflow-y-auto">
             <h3 className="font-semibold text-lg">Novo livro</h3>
+            <BuscaLivroOnline onSelecionar={dados => setForm(f => ({ ...f, ...dados }))} />
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-xs text-[#9a8f8f] mb-2">Ou preencha manualmente:</p>
+            </div>
             <input className="input" placeholder="Título *" value={form.titulo??""} onChange={e=>setForm(f=>({...f,titulo:e.target.value}))} />
             <input className="input" placeholder="Autor" value={form.autor??""} onChange={e=>setForm(f=>({...f,autor:e.target.value}))} />
             <input className="input" placeholder="URL da capa" value={form.capaUrl??""} onChange={e=>setForm(f=>({...f,capaUrl:e.target.value}))} />
@@ -342,6 +365,7 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
             {isEditing ? (
               <div className="space-y-3">
                 <h3 className="font-serif text-xl font-semibold text-center border-b pb-2">Editar Informações</h3>
+                <BuscaLivroOnline onSelecionar={dados => setEditForm(f => ({ ...f, ...dados }))} />
                 <input className="input" placeholder="Título *" value={editForm.titulo||""} onChange={e=>setEditForm(f=>({...f,titulo:e.target.value}))} />
                 <input className="input" placeholder="Autor" value={editForm.autor||""} onChange={e=>setEditForm(f=>({...f,autor:e.target.value}))} />
                 <input className="input" placeholder="URL da capa" value={editForm.capaUrl||""} onChange={e=>setEditForm(f=>({...f,capaUrl:e.target.value}))} />
@@ -553,6 +577,98 @@ function LivroCard({ livro, renderStars, actions, extra }: {
           {actions && <div>{actions}</div>}
         </div>
       </div>
+    </div>
+  );
+}
+
+interface GoogleBookItem {
+  id: string;
+  volumeInfo?: {
+    title?: string;
+    authors?: string[];
+    description?: string;
+    categories?: string[];
+    imageLinks?: { thumbnail?: string; smallThumbnail?: string };
+  };
+}
+
+function BuscaLivroOnline({ onSelecionar }: { onSelecionar: (dados: Partial<Livro>) => void }) {
+  const [busca, setBusca] = useState("");
+  const [resultados, setResultados] = useState<GoogleBookItem[]>([]);
+  const [buscando, setBuscando] = useState(false);
+  const [erro, setErro] = useState(false);
+
+  async function pesquisar() {
+    if (!busca.trim()) return;
+    setBuscando(true);
+    setErro(false);
+    setResultados([]);
+    try {
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(busca)}&country=BR&maxResults=6`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("busca falhou");
+      const data = await res.json();
+      setResultados(data.items ?? []);
+    } catch {
+      setErro(true);
+    } finally {
+      setBuscando(false);
+    }
+  }
+
+  function selecionar(item: GoogleBookItem) {
+    const info = item.volumeInfo ?? {};
+    onSelecionar({
+      titulo: info.title ?? "",
+      autor: (info.authors ?? []).join(", "),
+      capaUrl: (info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail ?? "").replace("http://", "https://"),
+      sinopse: info.description ?? "",
+      genero: info.categories?.[0] ?? "",
+    });
+    setResultados([]);
+    setBusca("");
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="text-xs text-[#9a8f8f] font-medium flex items-center gap-1"><Search size={12}/> Buscar livro online (preenche automático)</label>
+      <div className="flex gap-2">
+        <input
+          className="input flex-1"
+          placeholder="Título ou autor..."
+          value={busca}
+          onChange={e => setBusca(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); pesquisar(); } }}
+        />
+        <button type="button" onClick={pesquisar} disabled={buscando || !busca.trim()}
+          className="btn-ghost px-4 flex items-center gap-1.5 whitespace-nowrap disabled:opacity-40">
+          {buscando ? "Buscando..." : <><Search size={14}/> Buscar</>}
+        </button>
+      </div>
+      {erro && <p className="text-xs text-red-500">Não consegui buscar agora. Preencha manualmente abaixo.</p>}
+      {!erro && !buscando && busca && resultados.length === 0 && (
+        <p className="text-xs text-[#9a8f8f]">Nenhum resultado ainda — aperte Buscar ou Enter.</p>
+      )}
+      {resultados.length > 0 && (
+        <div className="space-y-1 max-h-56 overflow-y-auto border border-gray-100 rounded-xl p-1.5">
+          {resultados.map(item => {
+            const info = item.volumeInfo ?? {};
+            const capa = info.imageLinks?.thumbnail?.replace("http://", "https://");
+            return (
+              <button key={item.id} type="button" onClick={() => selecionar(item)}
+                className="w-full flex gap-3 items-center p-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
+                {capa
+                  ? <img src={capa} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />
+                  : <div className="w-8 h-11 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center"><BookOpen size={12} className="text-gray-300"/></div>}
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-[#2d2d2d] truncate">{info.title ?? "Sem título"}</p>
+                  <p className="text-xs text-[#9a8f8f] truncate">{(info.authors ?? []).join(", ") || "Autor desconhecido"}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

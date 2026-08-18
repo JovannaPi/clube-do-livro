@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Lock, Unlock, Camera, Mail } from "lucide-react";
+import { Save, Lock, Unlock, Camera, Mail, Download } from "lucide-react";
 import { updateConfig, atualizarLivro, registrarAtividade} from "@/lib/db";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import type { ConfigApp, Livro, UserId } from "@/types";
 
 interface Props { config: ConfigApp | null; livros: Livro[]; livroAtual?: Livro; usuario: UserId; }
@@ -14,6 +16,32 @@ export default function ModuloConfig({ config, livros, livroAtual, usuario }: Pr
   const [metaAnual, setMetaAnual] = useState<number>(0);
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
+  const [baixando, setBaixando] = useState(false);
+
+  async function baixarBackup() {
+    setBaixando(true);
+    try {
+      const livrosCompletos = await Promise.all(livros.map(async l => {
+        const capsSnap = await getDocs(collection(db, "livros", l.id, "capitulos"));
+        const capitulos = await Promise.all(capsSnap.docs.map(async c => {
+          const comentariosSnap = await getDocs(collection(db, "livros", l.id, "capitulos", c.id, "comentarios"));
+          return { ...c.data(), comentarios: comentariosSnap.docs.map(cm => cm.data()) };
+        }));
+        const premSnap = await getDoc(doc(db, "premiacoes", l.id));
+        return { ...l, capitulos, premiacao: premSnap.exists() ? premSnap.data() : null };
+      }));
+      const backup = { exportadoEm: new Date().toISOString(), config, livros: livrosCompletos };
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `clube-do-livro-backup-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setBaixando(false);
+    }
+  }
 
   useEffect(() => {
     if (config) {
@@ -72,6 +100,18 @@ export default function ModuloConfig({ config, livros, livroAtual, usuario }: Pr
       {livroAtual && (
         <NotasFinais livro={livroAtual} usuario={usuario} />
       )}
+
+      {/* Backup */}
+      <section className="card p-5 space-y-3">
+        <h2 className="font-semibold text-[#2d2d2d] flex items-center gap-2"><Download size={16} className="text-[#e07a5f]" /> Backup</h2>
+        <p className="text-xs text-[#9a8f8f]">
+          Baixa um arquivo com todos os livros, diários, teorias, comentários e premiações — uma cópia de segurança pra guardar por fora do Firebase.
+        </p>
+        <button onClick={baixarBackup} disabled={baixando} className="btn-ghost w-full flex items-center justify-center gap-2">
+          <Download size={15} />
+          {baixando ? "Gerando backup..." : "Baixar backup (.json)"}
+        </button>
+      </section>
 
       {/* Info */}
       <div className="bg-gray-50 rounded-2xl p-4 text-xs text-[#9a8f8f] space-y-1">
@@ -204,6 +244,10 @@ function NotasFinais({ livro, usuario }: { livro: Livro; usuario: UserId }) {
       leitorAtual: undefined,
     } as Partial<Livro>);
     await registrarAtividade({ tipo: "nota", usuario, livroId: livro.id, livroTitulo: livro.titulo });
+    if (outraJaLeu) {
+      const confetti = (await import("canvas-confetti")).default;
+      confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, colors: ["#e07a5f", "#81b29a", "#fdf0ec"] });
+    }
     setSalvando(false);
     setSalvo(true);
     setTimeout(() => setSalvo(false), 2000);
