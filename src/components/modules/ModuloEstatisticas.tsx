@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Star, Heart, Flame, Target, BarChart2 } from "lucide-react";
+import { BookOpen, Star, Heart, Flame, Target, BarChart2, Award } from "lucide-react";
 import { listenAtividades } from "@/lib/db";
 import type { Livro, ConfigApp, Atividade, UserId } from "@/types";
 
@@ -59,6 +59,16 @@ export default function ModuloEstatisticas({ livros, config }: Props) {
 
   const sugestoes = { jovanna: livros.filter(l => l.sugeridoPor === "jovanna").length, leticia: livros.filter(l => l.sugeridoPor === "leticia").length };
 
+  const halDaFama = concluidos
+    .map(l => {
+      const notas = [l.notaJovanna, l.notaLeticia].filter(n => n != null) as number[];
+      const media = notas.length ? notas.reduce((s, n) => s + n, 0) / notas.length : null;
+      return { livro: l, media };
+    })
+    .filter(x => x.media != null)
+    .sort((a, b) => (b.media ?? 0) - (a.media ?? 0))
+    .slice(0, 3);
+
   return (
     <div className="space-y-6">
       {/* Meta anual */}
@@ -75,6 +85,33 @@ export default function ModuloEstatisticas({ livros, config }: Props) {
             <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
               <div className="h-3 rounded-full bg-[#e07a5f] transition-all duration-500" style={{ width: `${pctMeta}%` }} />
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Hall da fama */}
+      {halDaFama.length > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Hall da fama</h2>
+          <div className="space-y-2">
+            {halDaFama.map(({ livro, media }, i) => (
+              <div key={livro.id} className="card p-4 flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                  style={{ backgroundColor: i === 0 ? "#fde68a" : i === 1 ? "#e5e7eb" : "#fdba74", color: "#7c5a00" }}>
+                  {i + 1}º
+                </div>
+                {livro.capaUrl
+                  ? <img src={livro.capaUrl} alt="" className="w-10 h-14 object-cover rounded flex-shrink-0" />
+                  : <div className="w-10 h-14 bg-gray-100 rounded flex items-center justify-center flex-shrink-0"><BookOpen size={14} className="text-gray-300"/></div>}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{livro.titulo}</p>
+                  <p className="text-xs text-[#9a8f8f] truncate">{livro.autor}</p>
+                </div>
+                <div className="flex items-center gap-1 text-sm font-bold text-[#e07a5f] flex-shrink-0">
+                  <Award size={14} /> {media?.toFixed(1)}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}

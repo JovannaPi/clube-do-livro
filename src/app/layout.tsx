@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 
@@ -8,6 +8,19 @@ const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-serif", displa
 export const metadata: Metadata = {
   title: "Clube do Livro ♥",
   description: "Diário de leitura do nosso clube",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Clube do Livro",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#e07a5f",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
