@@ -581,20 +581,52 @@ function LivroCard({ livro, renderStars, actions, extra }: {
   );
 }
 
-interface GoogleBookItem {
+interface ResultadoBusca {
   id: string;
-  volumeInfo?: {
-    title?: string;
-    authors?: string[];
-    description?: string;
-    categories?: string[];
-    imageLinks?: { thumbnail?: string; smallThumbnail?: string };
-  };
+  titulo: string;
+  autor: string;
+  capaUrl: string;
+  sinopse: string;
+  genero: string;
+}
+
+async function buscarGoogleBooks(busca: string): Promise<ResultadoBusca[]> {
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(busca)}&country=BR&maxResults=6`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`google books ${res.status}`);
+  const data = await res.json();
+  return (data.items ?? []).map((item: { id: string; volumeInfo?: { title?: string; authors?: string[]; description?: string; categories?: string[]; imageLinks?: { thumbnail?: string; smallThumbnail?: string } } }) => {
+    const info = item.volumeInfo ?? {};
+    return {
+      id: item.id,
+      titulo: info.title ?? "",
+      autor: (info.authors ?? []).join(", "),
+      capaUrl: (info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail ?? "").replace("http://", "https://"),
+      sinopse: info.description ?? "",
+      genero: info.categories?.[0] ?? "",
+    };
+  });
+}
+
+async function buscarOpenLibrary(busca: string): Promise<ResultadoBusca[]> {
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(busca)}&language=por&limit=6`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`open library ${res.status}`);
+  const data = await res.json();
+  const docs = (data.docs ?? []) as { key: string; title?: string; author_name?: string[]; cover_i?: number; subject?: string[] }[];
+  return docs.map(d => ({
+    id: d.key,
+    titulo: d.title ?? "",
+    autor: (d.author_name ?? []).join(", "),
+    capaUrl: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg` : "",
+    sinopse: "",
+    genero: d.subject?.[0] ?? "",
+  }));
 }
 
 function BuscaLivroOnline({ onSelecionar }: { onSelecionar: (dados: Partial<Livro>) => void }) {
   const [busca, setBusca] = useState("");
-  const [resultados, setResultados] = useState<GoogleBookItem[]>([]);
+  const [resultados, setResultados] = useState<ResultadoBusca[]>([]);
   const [buscando, setBuscando] = useState(false);
   const [erro, setErro] = useState(false);
 
@@ -604,26 +636,27 @@ function BuscaLivroOnline({ onSelecionar }: { onSelecionar: (dados: Partial<Livr
     setErro(false);
     setResultados([]);
     try {
-      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(busca)}&country=BR&maxResults=6`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("busca falhou");
-      const data = await res.json();
-      setResultados(data.items ?? []);
+      const res = await buscarGoogleBooks(busca);
+      setResultados(res);
     } catch {
-      setErro(true);
+      try {
+        const res = await buscarOpenLibrary(busca);
+        setResultados(res);
+      } catch {
+        setErro(true);
+      }
     } finally {
       setBuscando(false);
     }
   }
 
-  function selecionar(item: GoogleBookItem) {
-    const info = item.volumeInfo ?? {};
+  function selecionar(item: ResultadoBusca) {
     onSelecionar({
-      titulo: info.title ?? "",
-      autor: (info.authors ?? []).join(", "),
-      capaUrl: (info.imageLinks?.thumbnail ?? info.imageLinks?.smallThumbnail ?? "").replace("http://", "https://"),
-      sinopse: info.description ?? "",
-      genero: info.categories?.[0] ?? "",
+      titulo: item.titulo,
+      autor: item.autor,
+      capaUrl: item.capaUrl,
+      sinopse: item.sinopse,
+      genero: item.genero,
     });
     setResultados([]);
     setBusca("");
@@ -651,22 +684,18 @@ function BuscaLivroOnline({ onSelecionar }: { onSelecionar: (dados: Partial<Livr
       )}
       {resultados.length > 0 && (
         <div className="space-y-1 max-h-56 overflow-y-auto border border-gray-100 rounded-xl p-1.5">
-          {resultados.map(item => {
-            const info = item.volumeInfo ?? {};
-            const capa = info.imageLinks?.thumbnail?.replace("http://", "https://");
-            return (
-              <button key={item.id} type="button" onClick={() => selecionar(item)}
-                className="w-full flex gap-3 items-center p-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
-                {capa
-                  ? <img src={capa} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />
-                  : <div className="w-8 h-11 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center"><BookOpen size={12} className="text-gray-300"/></div>}
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-[#2d2d2d] truncate">{info.title ?? "Sem título"}</p>
-                  <p className="text-xs text-[#9a8f8f] truncate">{(info.authors ?? []).join(", ") || "Autor desconhecido"}</p>
-                </div>
-              </button>
-            );
-          })}
+          {resultados.map(item => (
+            <button key={item.id} type="button" onClick={() => selecionar(item)}
+              className="w-full flex gap-3 items-center p-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
+              {item.capaUrl
+                ? <img src={item.capaUrl} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />
+                : <div className="w-8 h-11 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center"><BookOpen size={12} className="text-gray-300"/></div>}
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-[#2d2d2d] truncate">{item.titulo || "Sem título"}</p>
+                <p className="text-xs text-[#9a8f8f] truncate">{item.autor || "Autor desconhecido"}</p>
+              </div>
+            </button>
+          ))}
         </div>
       )}
     </div>
