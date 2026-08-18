@@ -27,34 +27,38 @@
 body {
   background-color: var(--cream);
   color: var(--ink);
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
+.dark body { background-color: #09090b; }
+
 .card {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+  @apply bg-white dark:bg-zinc-900 rounded-2xl shadow-soft border border-gray-100 dark:border-zinc-800 transition-shadow duration-200;
 }
 
 .btn-primary {
   background-color: var(--cor-usuario);
-  @apply text-white font-medium py-2.5 px-5 rounded-xl active:scale-95 transition-all duration-150;
+  @apply text-white font-medium py-2.5 px-5 rounded-xl active:scale-95 transition-all duration-150 shadow-soft;
 }
 .btn-primary:hover {
   background-color: var(--cor-usuario-hover);
+  @apply shadow-lift;
 }
 
 .btn-secondary {
-  @apply bg-[#81b29a] text-white font-medium py-2.5 px-5 rounded-xl
+  @apply bg-[#81b29a] text-white font-medium py-2.5 px-5 rounded-xl shadow-soft
          hover:bg-[#5f8f7a] active:scale-95 transition-all duration-150;
 }
 
 .btn-ghost {
-  @apply border border-gray-200 text-gray-600 font-medium py-2.5 px-5 rounded-xl
-         hover:bg-gray-50 active:scale-95 transition-all duration-150;
+  @apply border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-300 font-medium py-2.5 px-5 rounded-xl
+         hover:bg-gray-50 dark:hover:bg-zinc-800 active:scale-95 transition-all duration-150;
 }
 
 .input {
-  @apply w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm
-         focus:outline-none transition-all duration-150 bg-white;
+  @apply w-full border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-sm
+         focus:outline-none transition-all duration-150 bg-white dark:bg-zinc-800 dark:text-zinc-100;
   --tw-ring-color: var(--cor-usuario-ring);
 }
 .input:focus {
@@ -63,8 +67,8 @@ body {
 }
 
 .textarea {
-  @apply w-full border border-gray-200 rounded-xl px-4 py-3 text-sm
-         focus:outline-none transition-all duration-150 bg-white resize-none;
+  @apply w-full border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm
+         focus:outline-none transition-all duration-150 bg-white dark:bg-zinc-800 dark:text-zinc-100 resize-none;
 }
 .textarea:focus {
   border-color: var(--cor-usuario);

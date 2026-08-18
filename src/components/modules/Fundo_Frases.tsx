@@ -5,41 +5,43 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, query, getDocs } from "firebase/firestore";
 
 interface Props {
-  livroAtualId?: string;
+  livroIds?: string[];
 }
 
-export function FundoFrases({ livroAtualId }: Props) {
+export function FundoFrases({ livroIds }: Props) {
   const [frases, setFrases] = useState<string[]>([]);
 
   useEffect(() => {
     async function carregarFrases() {
-      if (!livroAtualId) return;
-      
+      if (!livroIds || livroIds.length === 0) { setFrases([]); return; }
+
       try {
-        // Pega todos os documentos da subcoleção capitulos do livro atual
-        const capsRef = collection(db, "livros", livroAtualId, "capitulos");
-        const snapshot = await getDocs(capsRef);
-        
         const listaFrases: string[] = [];
-        snapshot.docs.forEach(doc => {
-          const data = doc.data();
-          // Coleta as frases da Jovanna e da Leticia, ignorando vazias
-          if (data.frase_jovanna && typeof data.frase_jovanna === "string") {
-            listaFrases.push(data.frase_jovanna);
-          }
-          if (data.frase_leticia && typeof data.frase_leticia === "string") {
-            listaFrases.push(data.frase_leticia);
-          }
-        });
-        
+        for (const livroId of livroIds) {
+          // Pega todos os documentos da subcoleção capitulos do livro
+          const capsRef = collection(db, "livros", livroId, "capitulos");
+          const snapshot = await getDocs(capsRef);
+
+          snapshot.docs.forEach(doc => {
+            const data = doc.data();
+            // Coleta as frases da Jovanna e da Leticia, ignorando vazias
+            if (data.frase_jovanna && typeof data.frase_jovanna === "string") {
+              listaFrases.push(data.frase_jovanna);
+            }
+            if (data.frase_leticia && typeof data.frase_leticia === "string") {
+              listaFrases.push(data.frase_leticia);
+            }
+          });
+        }
+
         setFrases(listaFrases);
       } catch (error) {
         console.error("Erro ao carregar frases de fundo:", error);
       }
     }
-    
+
     carregarFrases();
-  }, [livroAtualId]);
+  }, [livroIds?.join(",")]);
 
   if (frases.length === 0) return null;
 

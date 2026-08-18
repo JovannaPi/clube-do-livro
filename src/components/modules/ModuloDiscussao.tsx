@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Send, ChevronLeft, ChevronRight, MessageCircle, Lightbulb } from "lucide-react";
 import { listenComentarios, adicionarComentario, listenCapitulo } from "@/lib/db";
 import type { Livro, Comentario, Capitulo, UserId } from "@/types";
 
@@ -37,7 +37,7 @@ export default function ModuloDiscussao({ livroAtual, usuario }: Props) {
   if (!livroAtual) {
     return (
       <div className="text-center py-16 text-[#9a8f8f]">
-        <p className="text-4xl mb-3">💬</p>
+        <MessageCircle size={36} className="mx-auto mb-3 text-gray-300" />
         <p className="text-sm">Nenhum livro em leitura.</p>
       </div>
     );
@@ -65,8 +65,9 @@ export default function ModuloDiscussao({ livroAtual, usuario }: Props) {
       </div>
 
       {!ambasEnviaram && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-700 text-center">
-          💡 A discussão fica liberada após ambas enviarem as respostas secretas deste capítulo.
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-700 text-center flex items-center justify-center gap-1.5">
+          <Lightbulb size={14} className="flex-shrink-0" />
+          A discussão fica liberada após ambas enviarem as respostas secretas deste capítulo.
         </div>
       )}
 

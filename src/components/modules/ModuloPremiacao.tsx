@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Trophy, Save } from "lucide-react";
+import { Trophy, Save, Film, Brain, Zap } from "lucide-react";
 import { listenPremiacao, salvarPremiacao } from "@/lib/db";
 import type { Livro, Premiacao, UserId } from "@/types";
 
 interface Props { livroAtual?: Livro; usuario: UserId; }
 
 const CATEGORIAS = [
-  { key: "melhorPersonagem", label: "🏆 Melhor personagem", placeholder: "Nome do personagem..." },
-  { key: "cenaFavorita",     label: "🎬 Cena favorita",     placeholder: "Descreva a cena..." },
-  { key: "teoriaMaisLoucas", label: "🤯 Teoria mais maluca", placeholder: "Sua teoria mais absurda..." },
-  { key: "maiorSurpresa",    label: "😲 Maior surpresa",    placeholder: "O que te surpreendeu mais?" },
+  { key: "melhorPersonagem", label: "Melhor personagem", icon: Trophy, placeholder: "Nome do personagem..." },
+  { key: "cenaFavorita",     label: "Cena favorita",     icon: Film,   placeholder: "Descreva a cena..." },
+  { key: "teoriaMaisLoucas", label: "Teoria mais maluca", icon: Brain, placeholder: "Sua teoria mais absurda..." },
+  { key: "maiorSurpresa",    label: "Maior surpresa",    icon: Zap,    placeholder: "O que te surpreendeu mais?" },
 ] as const;
 
 type CatKey = typeof CATEGORIAS[number]["key"];
@@ -51,7 +51,7 @@ export default function ModuloPremiacao({ livroAtual, usuario }: Props) {
   if (!livroAtual) {
     return (
       <div className="text-center py-16 text-[#9a8f8f]">
-        <p className="text-4xl mb-3">🏆</p>
+        <Trophy size={36} className="mx-auto mb-3 text-gray-300" />
         <p className="text-sm">Nenhum livro em leitura.</p>
       </div>
     );
@@ -71,11 +71,13 @@ export default function ModuloPremiacao({ livroAtual, usuario }: Props) {
         </div>
       </div>
 
-      {CATEGORIAS.map(({ key, label, placeholder }) => {
+      {CATEGORIAS.map(({ key, label, icon: Icon, placeholder }) => {
         const respostaOutra = (premiacao?.[key] as Record<string,string>)?.[outra];
         return (
           <div key={key} className="card p-5 space-y-3">
-            <label className="text-sm font-medium text-[#2d2d2d]">{label}</label>
+            <label className="text-sm font-medium text-[#2d2d2d] flex items-center gap-1.5">
+              <Icon size={15} className="text-[#e07a5f]" /> {label}
+            </label>
             <textarea className="textarea" rows={2} placeholder={placeholder}
               value={form[key] ?? ""} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
             {respostaOutra && (

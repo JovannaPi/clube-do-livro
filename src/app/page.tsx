@@ -72,31 +72,43 @@ export default function Home() {
     if (savedTheme === "dark") setIsDark(true);
   }, []);
 
-  const livroAtual = livros.find(l => l.id === config?.livroAtualId);
+  const livroAtualId = usuario === "jovanna" ? config?.livroAtualIdJovanna : config?.livroAtualIdLeticia;
+  const livroAtual = livros.find(l => l.id === livroAtualId);
+  const fraseIds = [config?.livroAtualIdJovanna, config?.livroAtualIdLeticia].filter(Boolean) as string[];
 
   return (
     <div className="min-h-screen flex flex-col">
-      <FundoFrases livroAtualId={config?.livroAtualId} />
+      <FundoFrases livroIds={fraseIds} />
 
       {/* Header */}
       <header className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 sticky top-0 z-30 transition-colors duration-200">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {/* Avatar da usuária ativa */}
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 transition-colors duration-300"
-              style={{ backgroundColor: cor.primary }}
-            >
-              {cor.initial}
-            </div>
+            {/* Foto do casal ou avatar da usuária ativa */}
+            {config?.fotoUrl ? (
+              <img
+                src={config.fotoUrl}
+                alt="Foto do casal"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-sm"
+                style={{ border: `2px solid ${cor.primary}` }}
+              />
+            ) : (
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 transition-colors duration-300"
+                style={{ backgroundColor: cor.primary }}
+              >
+                {cor.initial}
+              </div>
+            )}
             <h1 className="font-serif text-lg font-semibold text-[#2d2d2d] dark:text-zinc-100 flex items-center gap-1">
               {config?.nomeclube ?? "Clube do Livro"}
               <button
                 onClick={() => setShowMensagem(true)}
                 className="hover:scale-125 transition-transform duration-200 cursor-pointer"
                 style={{ color: cor.primary }}
+                title="Uma mensagem"
               >
-                ♥
+                <Heart size={16} fill={cor.primary} />
               </button>
             </h1>
           </div>
@@ -149,7 +161,7 @@ export default function Home() {
             className="bg-white dark:bg-zinc-900 rounded-3xl p-8 max-w-sm w-full text-center space-y-4 shadow-2xl relative"
             style={{ border: `2px solid ${cor.primary}4d` }}
           >
-            <p className="text-4xl">💌</p>
+            <Heart size={36} className="mx-auto" fill={cor.primary} style={{ color: cor.primary }} />
             <p className="font-serif text-lg text-[#2d2d2d] dark:text-zinc-100 leading-relaxed">
               Feliz Dia das Namoradas, meu bem. <br/><br/>
               Fiz esse cantinho só nosso, para guardarmos cada livro, cada teoria maluca e cada conversa que tivermos juntas. <br/><br/>
@@ -193,10 +205,10 @@ export default function Home() {
         {tab === "diario"      && <ModuloDiario     livroAtual={livroAtual} usuario={usuario} />}
         {tab === "secreto"     && <ModuloSecreto    livroAtual={livroAtual} usuario={usuario} />}
         {tab === "discussao"   && <ModuloDiscussao  livroAtual={livroAtual} usuario={usuario} />}
-        {tab === "stats"       && <ModuloEstatisticas livros={livros} />}
+        {tab === "stats"       && <ModuloEstatisticas livros={livros} config={config} />}
         {tab === "premiacao"   && <ModuloPremiacao  livroAtual={livroAtual} usuario={usuario} />}
         {tab === "memorias"    && <ModuloMemorias   livros={livros} />}
-        {tab === "config"      && <ModuloConfig     config={config} livros={livros} />}
+        {tab === "config"      && <ModuloConfig     config={config} livros={livros} livroAtual={livroAtual} usuario={usuario} />}
       </main>
     </div>
   );

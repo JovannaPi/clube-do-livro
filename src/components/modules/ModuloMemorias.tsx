@@ -1,37 +1,89 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, Heart, Star, Lock, Camera, X, ImagePlus } from "lucide-react";
+import { BookOpen, Heart, Star, Lock, Unlock, Camera, X, ImagePlus, Quote, Calendar, Trophy, Film, Brain, Zap, Mail } from "lucide-react";
 import { listenPremiacao } from "@/lib/db";
 import { storage, db } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
-import type { Livro, Premiacao } from "@/types";
+import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, collectionGroup, getDocs } from "firebase/firestore";
+import type { Livro, Premiacao, UserId } from "@/types";
 
 interface Props { livros: Livro[]; }
+
+const NOME_COR: Record<UserId, { nome: string; cor: string }> = {
+  jovanna: { nome: "Jovanna", cor: "#e07a5f" },
+  leticia: { nome: "Leticia", cor: "#81b29a" },
+};
 
 export default function ModuloMemorias({ livros }: Props) {
   const concluidos = livros.filter(l => l.status === "concluido");
 
-  if (concluidos.length === 0) {
-    return (
-      <div className="text-center py-16 text-[#9a8f8f]">
-        <p className="text-4xl mb-3">💌</p>
-        <p className="text-sm">Concluam o primeiro livro para criar memórias!</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
-      <div className="text-center space-y-1">
-        <p className="text-lg font-serif font-semibold text-[#2d2d2d] dark:text-zinc-100">Cápsulas do Tempo</p>
-        <p className="text-sm text-[#9a8f8f]">Cada livro que vivemos juntas, guardado pra sempre ♥</p>
-      </div>
-      {concluidos.map(l => (
-        <CapsulaDeTempo key={l.id} livro={l} />
-      ))}
+      <MuralFrases livros={livros} />
+
+      {concluidos.length === 0 ? (
+        <div className="text-center py-16 text-[#9a8f8f]">
+          <Heart size={36} className="mx-auto mb-3 text-gray-300" />
+          <p className="text-sm">Concluam o primeiro livro para criar memórias!</p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <div className="text-center space-y-1">
+            <p className="text-lg font-serif font-semibold text-[#2d2d2d] dark:text-zinc-100">Cápsulas do Tempo</p>
+            <p className="text-sm text-[#9a8f8f]">Cada livro que vivemos juntas, guardado pra sempre ♥</p>
+          </div>
+          {concluidos.map(l => (
+            <CapsulaDeTempo key={l.id} livro={l} />
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+function MuralFrases({ livros }: { livros: Livro[] }) {
+  const [frases, setFrases] = useState<{ texto: string; usuario: UserId; livroTitulo: string }[]>([]);
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+        const snap = await getDocs(collectionGroup(db, "capitulos"));
+        const lista: { texto: string; usuario: UserId; livroTitulo: string }[] = [];
+        snap.docs.forEach(d => {
+          const livroId = d.ref.parent.parent?.id;
+          const livroTitulo = livros.find(l => l.id === livroId)?.titulo ?? "";
+          const data = d.data();
+          if (data.frase_jovanna) lista.push({ texto: data.frase_jovanna, usuario: "jovanna", livroTitulo });
+          if (data.frase_leticia) lista.push({ texto: data.frase_leticia, usuario: "leticia", livroTitulo });
+        });
+        setFrases(lista);
+      } catch (error) {
+        console.error("Erro ao carregar mural de frases:", error);
+      }
+    }
+    if (livros.length > 0) carregar();
+  }, [livros]);
+
+  if (frases.length === 0) return null;
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Quote size={18} className="text-[#e07a5f]" />
+        <h2 className="font-serif text-lg font-semibold text-[#2d2d2d] dark:text-zinc-100">Mural de frases favoritas</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {frases.map((f, i) => (
+          <div key={i} className="card p-4" style={{ borderLeft: `3px solid ${NOME_COR[f.usuario].cor}` }}>
+            <p className="text-sm italic text-gray-700 dark:text-zinc-300">&ldquo;{f.texto}&rdquo;</p>
+            <p className="text-xs mt-2 font-medium" style={{ color: NOME_COR[f.usuario].cor }}>
+              {NOME_COR[f.usuario].nome} · {f.livroTitulo}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -105,10 +157,15 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
             : <div className="w-16 h-[88px] bg-white/50 rounded-xl flex-shrink-0 flex items-center justify-center"><BookOpen size={24} className="text-gray-300"/></div>
           }
           <div className="flex-1 min-w-0">
-            <p className="font-serif text-xl font-bold text-[#2d2d2d] dark:text-zinc-100 leading-tight">📖 {livro.titulo}</p>
+            <p className="font-serif text-xl font-bold text-[#2d2d2d] dark:text-zinc-100 leading-tight flex items-center gap-1.5">
+              <BookOpen size={18} className="flex-shrink-0 text-[#9a8f8f]" /> {livro.titulo}
+            </p>
             <p className="text-sm text-[#9a8f8f] italic mt-0.5">{livro.autor}</p>
-            {livro.dataInicio && livro.dataFim && (
-              <p className="text-xs text-[#9a8f8f] mt-2">📅 {livro.dataInicio} → {livro.dataFim}</p>
+            {livro.dataFimJovanna && (
+              <p className="text-xs text-[#9a8f8f] mt-2 flex items-center gap-1"><Calendar size={12} /> Jovanna: {livro.dataInicioJovanna} → {livro.dataFimJovanna}</p>
+            )}
+            {livro.dataFimLeticia && (
+              <p className="text-xs text-[#9a8f8f] flex items-center gap-1"><Calendar size={12} /> Leticia: {livro.dataInicioLeticia} → {livro.dataFimLeticia}</p>
             )}
             {media && (
               <div className="flex items-center gap-1 mt-2">
@@ -141,7 +198,7 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
         className="w-full flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-t border-[#e07a5f]/10 text-sm font-medium text-[#e07a5f] hover:bg-[#fdf0ec] dark:hover:bg-zinc-800 transition-colors"
       >
         <span>{aberta ? "Fechar cápsula" : "Abrir cápsula do tempo"}</span>
-        <span className="text-lg">{aberta ? "🔓" : "🔒"}</span>
+        {aberta ? <Unlock size={16} /> : <Lock size={16} />}
       </button>
 
       {/* Conteúdo */}
@@ -151,7 +208,7 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
           {/* Fotos */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">📸 Fotos desta leitura</p>
+              <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider flex items-center gap-1.5"><Camera size={13} /> Fotos desta leitura</p>
               <button
                 onClick={() => inputRef.current?.click()}
                 disabled={enviando}
@@ -210,22 +267,22 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
 
           {/* Premiações */}
           {(melhorPersonagemJ || melhorPersonagemL) && (
-            <CapsulaSecao label="🏆 Melhor personagem" jovanna={melhorPersonagemJ} leticia={melhorPersonagemL} />
+            <CapsulaSecao label="Melhor personagem" icon={Trophy} jovanna={melhorPersonagemJ} leticia={melhorPersonagemL} />
           )}
           {(cenaFavoritaJ || cenaFavoritaL) && (
-            <CapsulaSecao label="🎬 Cena favorita" jovanna={cenaFavoritaJ} leticia={cenaFavoritaL} />
+            <CapsulaSecao label="Cena favorita" icon={Film} jovanna={cenaFavoritaJ} leticia={cenaFavoritaL} />
           )}
           {(teoriasJ || teoriasL) && (
-            <CapsulaSecao label="🤯 Teoria mais maluca" jovanna={teoriasJ} leticia={teoriasL} />
+            <CapsulaSecao label="Teoria mais maluca" icon={Brain} jovanna={teoriasJ} leticia={teoriasL} />
           )}
           {(surpresaJ || surpresaL) && (
-            <CapsulaSecao label="😲 Maior surpresa" jovanna={surpresaJ} leticia={surpresaL} />
+            <CapsulaSecao label="Maior surpresa" icon={Zap} jovanna={surpresaJ} leticia={surpresaL} />
           )}
 
           {/* Cartas do futuro */}
           {temCartas ? (
             <div className="space-y-3">
-              <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">💌 Cartas escritas antes de começar</p>
+              <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider flex items-center gap-1.5"><Mail size={13} /> Cartas escritas antes de começar</p>
               {livro.cartaJovanna && (
                 <div className="bg-[#fdf0ec] dark:bg-zinc-800 rounded-2xl p-4 border-l-4 border-[#e07a5f]">
                   <p className="text-xs font-semibold text-[#e07a5f] mb-1">Jovanna escreveu:</p>
@@ -269,10 +326,10 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
   );
 }
 
-function CapsulaSecao({ label, jovanna, leticia }: { label: string; jovanna?: string; leticia?: string }) {
+function CapsulaSecao({ label, icon: Icon, jovanna, leticia }: { label: string; icon: React.ElementType; jovanna?: string; leticia?: string }) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">{label}</p>
+      <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider flex items-center gap-1.5"><Icon size={13} /> {label}</p>
       <div className="grid grid-cols-1 gap-2">
         {jovanna && (
           <div className="flex gap-2 items-start">

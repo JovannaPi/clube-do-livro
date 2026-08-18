@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Lock, Unlock } from "lucide-react";
+import { Save, Lock, Unlock, Camera, Mail } from "lucide-react";
 import { updateConfig, atualizarLivro, registrarAtividade} from "@/lib/db";
-import type { ConfigApp, Livro } from "@/types";
+import type { ConfigApp, Livro, UserId } from "@/types";
 
-interface Props { config: ConfigApp | null; livros: Livro[]; }
+interface Props { config: ConfigApp | null; livros: Livro[]; livroAtual?: Livro; usuario: UserId; }
 
-export default function ModuloConfig({ config, livros }: Props) {
+export default function ModuloConfig({ config, livros, livroAtual, usuario }: Props) {
   const [nomeclube, setNome] = useState("");
   const [citacao, setCitacao] = useState("");
+  const [fotoUrl, setFotoUrl] = useState("");
+  const [metaAnual, setMetaAnual] = useState<number>(0);
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
 
@@ -17,18 +19,20 @@ export default function ModuloConfig({ config, livros }: Props) {
     if (config) {
       setNome(config.nomeclube ?? "Clube do Livro ♥");
       setCitacao(config.citacaoFavorita ?? "");
+      setFotoUrl(config.fotoUrl ?? "");
+      setMetaAnual(config.metaAnual ?? 0);
     }
   }, [config]);
 
   async function salvarConfig() {
     setSalvando(true);
-    await updateConfig({ nomeclube, citacaoFavorita: citacao });
+    await updateConfig({ nomeclube, citacaoFavorita: citacao, fotoUrl, metaAnual });
     setSalvando(false);
     setSalvo(true);
     setTimeout(() => setSalvo(false), 2000);
   }
 
-  const livroAtual = livros.find(l => l.id === config?.livroAtualId);
+  const concluidos = livros.filter(l => l.status === "concluido").length;
 
   return (
     <div className="space-y-6">
@@ -44,6 +48,15 @@ export default function ModuloConfig({ config, livros }: Props) {
           <textarea className="textarea" rows={2} value={citacao} onChange={e => setCitacao(e.target.value)}
             placeholder="Uma citação que defina o clube..." />
         </div>
+        <div className="space-y-2">
+          <label className="text-xs text-[#9a8f8f] font-medium flex items-center gap-1"><Camera size={12}/> Foto do casal (URL, aparece no header)</label>
+          <input className="input" value={fotoUrl} onChange={e => setFotoUrl(e.target.value)} placeholder="https://..." />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs text-[#9a8f8f] font-medium">Meta de livros no ano ({new Date().getFullYear()})</label>
+          <input className="input" type="number" min={0} value={metaAnual || ""} onChange={e => setMetaAnual(Number(e.target.value))} placeholder="Ex: 12" />
+          {metaAnual > 0 && <p className="text-xs text-[#9a8f8f]">{concluidos} de {metaAnual} lidos até agora.</p>}
+        </div>
         <button onClick={salvarConfig} disabled={salvando} className="btn-primary w-full flex items-center justify-center gap-2">
           <Save size={15} />
           {salvando ? "Salvando..." : salvo ? "✓ Salvo!" : "Salvar configurações"}
@@ -57,7 +70,7 @@ export default function ModuloConfig({ config, livros }: Props) {
 
       {/* Notas finais */}
       {livroAtual && (
-        <NotasFinais livro={livroAtual} />
+        <NotasFinais livro={livroAtual} usuario={usuario} />
       )}
 
       {/* Info */}
@@ -99,7 +112,7 @@ function CartasFuturo({ livro }: { livro: Livro }) {
   return (
     <section className="card p-5 space-y-4">
       <div className="flex items-center gap-2">
-        <span className="text-lg">💌</span>
+        <Mail size={18} className="text-[#e07a5f]" />
         <h2 className="font-semibold text-[#2d2d2d]">Cartas para o futuro</h2>
       </div>
       <p className="text-xs text-[#9a8f8f]">
@@ -154,30 +167,56 @@ function CartasFuturo({ livro }: { livro: Livro }) {
   );
 }
 
-function NotasFinais({ livro }: { livro: Livro }) {
-  const [notaJ, setNotaJ] = useState<number>(livro.notaJovanna ?? 0);
-  const [notaL, setNotaL] = useState<number>(livro.notaLeticia ?? 0);
+function NotasFinais({ livro, usuario }: { livro: Livro; usuario: UserId }) {
+  const minhaNota = usuario === "jovanna" ? livro.notaJovanna : livro.notaLeticia;
+  const [nota, setNota] = useState<number>(minhaNota ?? 5);
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
 
+  useEffect(() => { setNota(minhaNota ?? 5); }, [livro.id]);
+
+  const outra: UserId = usuario === "jovanna" ? "leticia" : "jovanna";
+  const notaOutra = outra === "jovanna" ? livro.notaJovanna : livro.notaLeticia;
+  const cor = usuario === "jovanna" ? "#e07a5f" : "#81b29a";
+
+  if (minhaNota != null) {
+    return (
+      <section className="card p-5 space-y-2">
+        <h2 className="font-semibold text-[#2d2d2d]">Notas finais — {livro.titulo}</h2>
+        <p className="text-sm text-[#9a8f8f]">
+          Você já deu sua nota: <strong style={{ color: cor }}>{minhaNota}/10</strong>.
+          {notaOutra == null && ` Assim que ${outra === "jovanna" ? "Jovanna" : "Leticia"} terminar de ler, o livro fica concluído.`}
+        </p>
+      </section>
+    );
+  }
+
   async function salvar() {
     setSalvando(true);
-    await atualizarLivro(livro.id, { notaJovanna: notaJ, notaLeticia: notaL, status: "concluido" });
+    const hoje = new Date().toISOString().split("T")[0];
+    const campoNota = usuario === "jovanna" ? "notaJovanna" : "notaLeticia";
+    const campoData = usuario === "jovanna" ? "dataFimJovanna" : "dataFimLeticia";
+    const outraJaLeu = notaOutra != null;
+    await atualizarLivro(livro.id, {
+      [campoNota]: nota,
+      [campoData]: hoje,
+      status: outraJaLeu ? "concluido" : "trocar",
+      leitorAtual: undefined,
+    } as Partial<Livro>);
+    await registrarAtividade({ tipo: "nota", usuario, livroId: livro.id, livroTitulo: livro.titulo });
     setSalvando(false);
     setSalvo(true);
-;
-
     setTimeout(() => setSalvo(false), 2000);
   }
 
   return (
     <section className="card p-5 space-y-4">
-      <h2 className="font-semibold text-[#2d2d2d]">Notas finais — {livro.titulo}</h2>
-      <NotaSlider label="Jovanna" value={notaJ} onChange={setNotaJ} cor="#e07a5f" />
-      <NotaSlider label="Leticia"  value={notaL} onChange={setNotaL} cor="#81b29a" />
+      <h2 className="font-semibold text-[#2d2d2d]">Terminei de ler — {livro.titulo}</h2>
+      <p className="text-xs text-[#9a8f8f]">Dê sua nota final. O livro vai pra fila de troca até {outra === "jovanna" ? "Jovanna" : "Leticia"} também terminar.</p>
+      <NotaSlider label={usuario === "jovanna" ? "Jovanna" : "Leticia"} value={nota} onChange={setNota} cor={cor} />
       <button onClick={salvar} disabled={salvando} className="btn-primary w-full flex items-center justify-center gap-2">
         <Save size={15}/>
-        {salvando ? "Salvando..." : salvo ? "✓ Salvo!" : "Salvar notas"}
+        {salvando ? "Salvando..." : salvo ? "✓ Salvo!" : "Terminei — salvar nota"}
       </button>
     </section>
   );

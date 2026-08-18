@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, BookOpen } from "lucide-react";
 import { listenCapitulo, salvarCapitulo, registrarAtividade } from "@/lib/db";
 import type { Livro, Capitulo, UserId } from "@/types";
 
@@ -125,7 +125,7 @@ export default function ModuloDiario({ livroAtual, usuario }: Props) {
 function EmptyState({ msg }: { msg: string }) {
   return (
     <div className="text-center py-16 text-[#9a8f8f]">
-      <p className="text-4xl mb-3">📚</p>
+      <BookOpen size={36} className="mx-auto mb-3 text-gray-300" />
       <p className="text-sm">{msg}</p>
     </div>
   );

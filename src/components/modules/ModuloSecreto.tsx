@@ -26,6 +26,13 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
       [`teoria_${usuario}`]: teoria,
       [`${usuario}_enviou`]: true,
     } as Partial<Capitulo>);
+    await registrarAtividade({
+      tipo: "secreto",
+      usuario,
+      livroId: livroAtual.id,
+      livroTitulo: livroAtual.titulo,
+      capitulo: capNum,
+    });
     setEnviando(false);
   }
 
@@ -73,7 +80,7 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
         <div className="space-y-4">
           <div className="text-center py-4">
             <Unlock size={32} className="mx-auto text-yellow-500 mb-2" />
-            <p className="font-serif text-xl font-semibold text-[#2d2d2d]">🔓 Revelado!</p>
+            <p className="font-serif text-xl font-semibold text-[#2d2d2d]">Revelado!</p>
             <p className="text-sm text-[#9a8f8f]">Ambas enviaram — hora de comparar!</p>
           </div>
           <RespostaCard
@@ -91,7 +98,7 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
         /* Aguardando */
         <div className="card p-8 text-center space-y-3">
           <Lock size={32} className="mx-auto text-[#e07a5f]" />
-          <p className="font-medium text-[#2d2d2d]">Resposta travada 🔒</p>
+          <p className="font-medium text-[#2d2d2d]">Resposta travada</p>
           <p className="text-sm text-[#9a8f8f]">Aguardando {nomeOutra} enviar a dela...</p>
           <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
             <div className="bg-[#e07a5f] h-1.5 rounded-full w-1/2" />
@@ -115,7 +122,7 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
           <button onClick={enviar} disabled={enviando || !teoria.trim()}
             className="btn-primary w-full flex items-center justify-center gap-2">
             <Lock size={15} />
-            {enviando ? "Travando..." : "Travar resposta 🔒"}
+            {enviando ? "Travando..." : "Travar resposta"}
           </button>
         </div>
       )}
@@ -146,7 +153,7 @@ function RespostaCard({ nome, cor, teoria, emocoes }: { nome: string; cor: strin
 function EmptyState() {
   return (
     <div className="text-center py-16 text-[#9a8f8f]">
-      <p className="text-4xl mb-3">🔒</p>
+      <Lock size={36} className="mx-auto mb-3 text-gray-300" />
       <p className="text-sm">Nenhum livro em leitura.</p>
     </div>
   );

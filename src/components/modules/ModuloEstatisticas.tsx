@@ -1,12 +1,49 @@
 "use client";
 
-import { BookOpen, Star, Heart, CheckCircle } from "lucide-react";
-import type { Livro } from "@/types";
+import { useState, useEffect } from "react";
+import { BookOpen, Star, Heart, Flame, Target, BarChart2 } from "lucide-react";
+import { listenAtividades } from "@/lib/db";
+import type { Livro, ConfigApp, Atividade, UserId } from "@/types";
 
-interface Props { livros: Livro[]; }
+interface Props { livros: Livro[]; config: ConfigApp | null; }
 
-export default function ModuloEstatisticas({ livros }: Props) {
+function calcularSequencia(atividades: Atividade[], usuario: UserId): number {
+  const dias = new Set(
+    atividades
+      .filter(a => a.usuario === usuario && (a.tipo === "diario" || a.tipo === "secreto"))
+      .map(a => a.criadoEm.split("T")[0])
+  );
+  if (dias.size === 0) return 0;
+  let streak = 0;
+  const cursor = new Date();
+  // Se ainda não escreveu hoje, a sequência conta a partir de ontem.
+  if (!dias.has(cursor.toISOString().split("T")[0])) cursor.setDate(cursor.getDate() - 1);
+  while (dias.has(cursor.toISOString().split("T")[0])) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+export default function ModuloEstatisticas({ livros, config }: Props) {
+  const [atividades, setAtividades] = useState<Atividade[]>([]);
+
+  useEffect(() => {
+    const unsub = listenAtividades(setAtividades);
+    return () => unsub();
+  }, []);
+
   const concluidos = livros.filter(l => l.status === "concluido");
+  const anoAtual = new Date().getFullYear();
+  const concluidosNoAno = concluidos.filter(l => {
+    const fim = [l.dataFimJovanna, l.dataFimLeticia].filter(Boolean).sort().pop();
+    return fim && new Date(fim).getFullYear() === anoAtual;
+  }).length;
+  const metaAnual = config?.metaAnual ?? 0;
+  const pctMeta = metaAnual > 0 ? Math.min(100, Math.round((concluidosNoAno / metaAnual) * 100)) : 0;
+
+  const sequenciaJovanna = calcularSequencia(atividades, "jovanna");
+  const sequenciaLeticia = calcularSequencia(atividades, "leticia");
 
   const mediaJovanna = concluidos.filter(l => l.notaJovanna != null).length
     ? (concluidos.reduce((s, l) => s + (l.notaJovanna ?? 0), 0) / concluidos.filter(l => l.notaJovanna != null).length).toFixed(1)
@@ -24,6 +61,33 @@ export default function ModuloEstatisticas({ livros }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Meta anual */}
+      {metaAnual > 0 && (
+        <section>
+          <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Meta de {anoAtual}</h2>
+          <div className="card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-[#2d2d2d]">
+                <Target size={16} className="text-[#e07a5f]" /> {concluidosNoAno} de {metaAnual} livros
+              </div>
+              <span className="text-sm font-bold text-[#e07a5f]">{pctMeta}%</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              <div className="h-3 rounded-full bg-[#e07a5f] transition-all duration-500" style={{ width: `${pctMeta}%` }} />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Sequência de leitura */}
+      <section>
+        <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Sequência de leitura</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard icon={<Flame size={20} className="text-[#e07a5f]" />} label="Sequência de Jovanna" value={`${sequenciaJovanna} dia${sequenciaJovanna === 1 ? "" : "s"}`} small />
+          <StatCard icon={<Flame size={20} className="text-[#81b29a]" />} label="Sequência de Leticia" value={`${sequenciaLeticia} dia${sequenciaLeticia === 1 ? "" : "s"}`} small />
+        </div>
+      </section>
+
       {/* Casal */}
       <section>
         <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Do casal</h2>
@@ -62,7 +126,9 @@ export default function ModuloEstatisticas({ livros }: Props) {
                     <span className="text-[#81b29a]">Leticia: {l.notaLeticia ?? "—"}</span>
                   </div>
                 </div>
-                {l.dataFim && <span className="text-xs text-[#9a8f8f]">{l.dataFim}</span>}
+                {(l.dataFimJovanna || l.dataFimLeticia) && (
+                  <span className="text-xs text-[#9a8f8f]">{[l.dataFimJovanna, l.dataFimLeticia].filter(Boolean).sort().pop()}</span>
+                )}
               </div>
             ))}
           </div>
@@ -71,7 +137,7 @@ export default function ModuloEstatisticas({ livros }: Props) {
 
       {concluidos.length === 0 && (
         <div className="text-center py-16 text-[#9a8f8f]">
-          <p className="text-4xl mb-3">📊</p>
+          <BarChart2 size={36} className="mx-auto mb-3 text-gray-300" />
           <p className="text-sm">Concluam o primeiro livro para ver as estatísticas!</p>
         </div>
       )}

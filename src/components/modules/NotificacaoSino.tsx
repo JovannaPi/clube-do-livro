@@ -12,6 +12,8 @@ const LABELS: Record<Atividade["tipo"], string> = {
   secreto: "enviou uma teoria secreta",
   carta: "selou uma carta para o futuro",
   comentario: "comentou",
+  troca: "começou a ler o livro que você passou pra ela",
+  nota: "terminou um livro e deu a nota final",
 };
 
 export default function NotificacaoSino({ usuario }: Props) {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2 } from "lucide-react";
-import { salvarLivro, atualizarLivro, updateConfig, excluirLivro} from "@/lib/db";
+import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2, Repeat } from "lucide-react";
+import { salvarLivro, atualizarLivro, updateConfig, excluirLivro, registrarAtividade } from "@/lib/db";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import type { Livro, ConfigApp, UserId } from "@/types";
@@ -18,7 +18,8 @@ const COR = {
   leticia: { primary: "#81b29a", hover: "#5f8f7a", bg: "#eef5f1", border: "#81b29a4d", light: "#eef5f1" },
 };
 
-const STATUS_LABELS = { planejado: "Planejado", lendo: "Lendo", concluido: "Concluído" };
+const NOME = { jovanna: "Jovanna", leticia: "Leticia" } as const;
+const STATUS_LABELS = { planejado: "Planejado", lendo: "Lendo", trocar: "Prontos pra trocar", concluido: "Concluído" };
 
 export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   const cor = COR[usuario];
@@ -32,8 +33,12 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
 
   const planejados = livros.filter(l => l.status === "planejado");
   const lendo      = livros.filter(l => l.status === "lendo");
+  const trocar     = livros.filter(l => l.status === "trocar");
   const concluidos = livros.filter(l => l.status === "concluido");
-  const atual      = livros.find(l => l.id === config?.livroAtualId);
+
+  function jaLeu(livro: Livro, u: UserId) {
+    return u === "jovanna" ? livro.notaJovanna != null : livro.notaLeticia != null;
+  }
 
   async function salvar() {
     if (!form.titulo) return;
@@ -43,8 +48,14 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   }
 
   async function definirComoAtual(id: string) {
-    await updateConfig({ livroAtualId: id });
-    await atualizarLivro(id, { status: "lendo", dataInicio: new Date().toISOString().split("T")[0] });
+    const hoje = new Date().toISOString().split("T")[0];
+    const campoConfig = usuario === "jovanna" ? "livroAtualIdJovanna" : "livroAtualIdLeticia";
+    const campoData   = usuario === "jovanna" ? "dataInicioJovanna"  : "dataInicioLeticia";
+    await updateConfig({ [campoConfig]: id } as Partial<ConfigApp>);
+    await atualizarLivro(id, { status: "lendo", leitorAtual: usuario, [campoData]: hoje } as Partial<Livro>);
+    if (trocar.some(l => l.id === id)) {
+      await registrarAtividade({ tipo: "troca", usuario, livroId: id, livroTitulo: trocar.find(l=>l.id===id)?.titulo ?? "" });
+    }
     setLivroSorteado(null);
   }
 
@@ -128,34 +139,81 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
         )}
       </section>
 
-      {/* Lendo agora */}
-      {atual && (
+      {/* Lendo agora — uma card por pessoa que está lendo */}
+      {lendo.length > 0 && (
         <section>
           <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Lendo agora</h2>
-          <div className="card p-5 space-y-4" style={{ borderTop: `4px solid ${cor.primary}` }}>
-            <div className="flex gap-4">
-              {atual.capaUrl && (
-                <img src={atual.capaUrl} alt="capa" className="w-20 h-28 object-cover rounded-lg shadow-sm flex-shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-serif text-xl font-semibold text-[#2d2d2d]">{atual.titulo}</h3>
-                <p className="text-sm text-[#9a8f8f] mb-2">{atual.autor}</p>
-                {atual.sinopse && <p className="text-sm text-gray-600 line-clamp-3">{atual.sinopse}</p>}
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  {atual.genero && <span className="badge-rose">{atual.genero}</span>}
-                  {atual.dataInicio && <span className="badge-gray">Iniciado em {atual.dataInicio}</span>}
-                  {atual.totalCapitulos && <span className="badge-gray">{atual.totalCapitulos} capítulos</span>}
+          <div className="space-y-4">
+            {lendo.map(livro => {
+              const leitor = livro.leitorAtual ?? usuario;
+              const corLeitor = COR[leitor];
+              const dataInicio = leitor === "jovanna" ? livro.dataInicioJovanna : livro.dataInicioLeticia;
+              return (
+                <div key={livro.id} className="card p-5 space-y-4" style={{ borderTop: `4px solid ${corLeitor.primary}` }}>
+                  <div className="flex gap-4">
+                    {livro.capaUrl && (
+                      <img src={livro.capaUrl} alt="capa" className="w-20 h-28 object-cover rounded-lg shadow-sm flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="badge-gray mb-1 inline-block" style={{ color: corLeitor.primary, backgroundColor: corLeitor.bg }}>
+                        {NOME[leitor]} está lendo
+                      </span>
+                      <h3 className="font-serif text-xl font-semibold text-[#2d2d2d]">{livro.titulo}</h3>
+                      <p className="text-sm text-[#9a8f8f] mb-2">{livro.autor}</p>
+                      {livro.sinopse && <p className="text-sm text-gray-600 line-clamp-3">{livro.sinopse}</p>}
+                      <div className="flex items-center gap-2 mt-3 flex-wrap">
+                        {livro.genero && <span className="badge-rose">{livro.genero}</span>}
+                        {dataInicio && <span className="badge-gray">Iniciado em {dataInicio}</span>}
+                        {livro.totalCapitulos && <span className="badge-gray">{livro.totalCapitulos} capítulos</span>}
+                      </div>
+                      <button onClick={() => setLivroDetalhes(livro)} className="btn-ghost text-xs py-1.5 px-3 mt-3 flex items-center gap-1.5">
+                        <Eye size={12} /> Ver detalhes completos
+                      </button>
+                    </div>
+                  </div>
+                  {livro.totalCapitulos && (
+                    <ProgressoCapitulos livroId={livro.id} totalCapitulos={livro.totalCapitulos} cor={corLeitor.primary} />
+                  )}
                 </div>
-                <button onClick={() => setLivroDetalhes(atual)} className="btn-ghost text-xs py-1.5 px-3 mt-3 flex items-center gap-1.5">
-                  <Eye size={12} /> Ver detalhes completos
-                </button>
-              </div>
-            </div>
-            {atual.totalCapitulos && (
-              <ProgressoCapitulos livroId={atual.id} totalCapitulos={atual.totalCapitulos} cor={cor.primary} />
-            )}
+              );
+            })}
           </div>
         </section>
+      )}
+
+      {/* Prontos pra trocar — uma já leu, esperando a outra pegar */}
+      {trocar.length > 0 && (
+        <Section title="Prontos pra trocar" icon={<Repeat size={15}/>} count={trocar.length}>
+          {trocar.map(l => {
+            const quemJaLeu: UserId = l.notaJovanna != null ? "jovanna" : "leticia";
+            const euJaLi = jaLeu(l, usuario);
+            return (
+              <LivroCard key={l.id} livro={l} renderStars={renderStars}
+                extra={
+                  <p className="text-xs mt-1" style={{ color: COR[quemJaLeu].primary }}>
+                    {NOME[quemJaLeu]} já leu e deu nota {quemJaLeu === "jovanna" ? l.notaJovanna : l.notaLeticia}/10 — agora é a vez de {NOME[quemJaLeu === "jovanna" ? "leticia" : "jovanna"]}!
+                  </p>
+                }
+                actions={
+                  euJaLi ? (
+                    <p className="text-xs text-[#9a8f8f] mt-2 italic">Você já leu este — esperando {NOME[quemJaLeu === "jovanna" ? "leticia" : "jovanna"]}.</p>
+                  ) : (
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => definirComoAtual(l.id)}
+                        className="text-white text-xs py-1.5 px-3 rounded-xl font-medium transition-all active:scale-95 flex items-center gap-1"
+                        style={{ backgroundColor: cor.primary }}
+                      ><Repeat size={12}/> Agora é sua vez de ler</button>
+                      <button onClick={() => setLivroDetalhes(l)} className="btn-ghost text-xs py-1.5 px-3 flex items-center gap-1">
+                        <Eye size={12}/> Detalhes
+                      </button>
+                    </div>
+                  )
+                }
+              />
+            );
+          })}
+        </Section>
       )}
 
       <Section title="Planejados" icon={<Clock size={15}/>} count={planejados.length}>
@@ -311,12 +369,20 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                     </p>
                   </div>
                 )}
-                {livroDetalhes.status === "concluido" && (
+                {(livroDetalhes.status === "concluido" || livroDetalhes.status === "trocar") && (
                   <div className="border-t pt-3 space-y-2">
-                    <div className="flex gap-2 text-xs text-[#9a8f8f]">
-                      {livroDetalhes.dataInicio && <span>Lido de {livroDetalhes.dataInicio}</span>}
-                      {livroDetalhes.dataFim && <span>até {livroDetalhes.dataFim}</span>}
-                    </div>
+                    {livroDetalhes.notaJovanna != null && (
+                      <div className="flex gap-2 text-xs text-[#9a8f8f]">
+                        <span>Jovanna leu {livroDetalhes.dataInicioJovanna && `de ${livroDetalhes.dataInicioJovanna} `}
+                          {livroDetalhes.dataFimJovanna && `até ${livroDetalhes.dataFimJovanna}`}</span>
+                      </div>
+                    )}
+                    {livroDetalhes.notaLeticia != null && (
+                      <div className="flex gap-2 text-xs text-[#9a8f8f]">
+                        <span>Leticia leu {livroDetalhes.dataInicioLeticia && `de ${livroDetalhes.dataInicioLeticia} `}
+                          {livroDetalhes.dataFimLeticia && `até ${livroDetalhes.dataFimLeticia}`}</span>
+                      </div>
+                    )}
                     <div className="flex gap-4 text-sm p-3 rounded-xl" style={{ backgroundColor: cor.bg, border: `1px solid ${cor.border}` }}>
                       {livroDetalhes.notaJovanna != null && <span>Nota Jovanna: <strong className="text-[#e07a5f]">{livroDetalhes.notaJovanna}/10</strong></span>}
                       {livroDetalhes.notaLeticia != null && <span>Nota Leticia: <strong className="text-[#81b29a]">{livroDetalhes.notaLeticia}/10</strong></span>}

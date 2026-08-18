@@ -4,7 +4,7 @@ export type UserId = "jovanna" | "leticia";
 
 export interface Atividade {
   id: string;
-  tipo: "diario" | "secreto" | "carta" | "comentario";
+  tipo: "diario" | "secreto" | "carta" | "comentario" | "troca" | "nota";
   usuario: "jovanna" | "leticia";
   livroId: string;
   livroTitulo: string;
@@ -20,11 +20,17 @@ export interface Livro {
   sinopse: string;
   genero: string;
   totalCapitulos: number;
-  dataInicio?: string;
-  dataFim?: string;
-  status: "planejado" | "lendo" | "concluido";
+  // "planejado": na fila. "lendo": alguém está lendo agora (ver leitorAtual).
+  // "trocar": uma já leu e terminou, esperando a outra pegar o livro.
+  // "concluido": as duas já leram e avaliaram.
+  status: "planejado" | "lendo" | "trocar" | "concluido";
+  leitorAtual?: UserId;
   sugeridoPor?: UserId;
   motivoEscolha?: string;
+  dataInicioJovanna?: string;
+  dataFimJovanna?: string;
+  dataInicioLeticia?: string;
+  dataFimLeticia?: string;
   notaJovanna?: number;
   notaLeticia?: number;
   cartaJovanna?: string;
@@ -69,9 +75,11 @@ export interface Premiacao {
 }
 
 export interface ConfigApp {
-  livroAtualId: string;
+  livroAtualIdJovanna?: string;
+  livroAtualIdLeticia?: string;
   nomeclube: string;
   citacaoFavorita: string;
   fotoUrl?: string;
   tema: "light" | "dark";
+  metaAnual?: number;
 }
