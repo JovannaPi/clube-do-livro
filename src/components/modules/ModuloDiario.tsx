@@ -62,24 +62,24 @@ export default function ModuloDiario({ livroAtual, usuario }: Props) {
   return (
     <div className="space-y-5">
       {/* Nav capítulo */}
-      <div className="flex items-center justify-between bg-white rounded-2xl p-3 border border-gray-100">
+      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-gray-100">
         <button onClick={() => setCapNum(n => Math.max(1, n-1))} disabled={capNum === 1}
-          className="p-2 rounded-xl hover:bg-gray-50 disabled:opacity-30 transition-colors">
+          className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors">
           <ChevronLeft size={20} />
         </button>
         <div className="text-center">
-          <p className="font-serif font-semibold text-[#2d2d2d]">Capítulo {capNum}</p>
+          <p className="font-serif font-semibold text-[#2d2d2d] dark:text-zinc-100">Capítulo {capNum}</p>
           <p className="text-xs text-[#9a8f8f]">{livroAtual.titulo}</p>
         </div>
         <button onClick={() => setCapNum(n => Math.min(maxCap, n+1))} disabled={capNum === maxCap}
-          className="p-2 rounded-xl hover:bg-gray-50 disabled:opacity-30 transition-colors">
+          className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors">
           <ChevronRight size={20} />
         </button>
       </div>
 
       {/* Impressão geral */}
       <div className="card p-5 space-y-2">
-        <label className="text-sm font-medium text-[#2d2d2d]">Impressão geral</label>
+        <label className="text-sm font-medium text-[#2d2d2d] dark:text-zinc-100">Impressão geral</label>
         <textarea className="textarea" rows={4}
           placeholder="O que você achou deste capítulo?"
           value={impressao} onChange={e => setImpressao(e.target.value)}
@@ -88,7 +88,7 @@ export default function ModuloDiario({ livroAtual, usuario }: Props) {
 
       {/* Emoções */}
       <div className="card p-5">
-        <label className="text-sm font-medium text-[#2d2d2d] mb-3 block">Como você se sentiu?</label>
+        <label className="text-sm font-medium text-[#2d2d2d] dark:text-zinc-100 mb-3 block">Como você se sentiu?</label>
         <div className="flex flex-wrap gap-2">
           {EMOCOES.map(e => (
             <button key={e} onClick={() => toggleEmocao(e)}
@@ -106,7 +106,7 @@ export default function ModuloDiario({ livroAtual, usuario }: Props) {
 
       {/* Frase favorita */}
       <div className="card p-5 space-y-2">
-        <label className="text-sm font-medium text-[#2d2d2d]">Frase favorita</label>
+        <label className="text-sm font-medium text-[#2d2d2d] dark:text-zinc-100">Frase favorita</label>
         <textarea className="textarea" rows={2}
           placeholder='"A frase que mais te marcou neste capítulo..."'
           value={frase} onChange={e => setFrase(e.target.value)}

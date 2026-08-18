@@ -82,8 +82,8 @@ export default function Home() {
 
       {/* Header */}
       <header className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 sticky top-0 z-30 transition-colors duration-200">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {/* Foto do casal ou avatar da usuária ativa */}
             {config?.fotoUrl ? (
               <img
@@ -100,7 +100,7 @@ export default function Home() {
                 {cor.initial}
               </div>
             )}
-            <h1 className="font-serif text-lg font-semibold text-[#2d2d2d] dark:text-zinc-100 flex items-center gap-1">
+            <h1 className="font-serif text-base sm:text-lg font-semibold text-[#2d2d2d] dark:text-zinc-100 flex items-center gap-1 whitespace-nowrap">
               {config?.nomeclube ?? "Clube do Livro"}
               <button
                 onClick={() => setShowMensagem(true)}
@@ -113,14 +113,14 @@ export default function Home() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {/* Seletor de usuário */}
             <div className="flex gap-1 bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl text-sm">
               {(["jovanna", "leticia"] as const).map(u => (
                 <button
                   key={u}
                   onClick={() => setUsuario(u)}
-                  className="px-3 py-1 rounded-lg transition-all font-medium capitalize"
+                  className="px-2.5 sm:px-3 py-1 rounded-lg transition-all font-medium capitalize"
                   style={
                     usuario === u
                       ? { backgroundColor: COR[u].primary, color: "white" }
@@ -179,7 +179,7 @@ export default function Home() {
       )}
 
       {/* Tabs */}
-      <nav className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 overflow-x-auto sticky top-[61px] z-20 transition-colors duration-200">
+      <nav className="tabs-fade bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 overflow-x-auto sticky top-[61px] z-20 transition-colors duration-200">
         <div className="max-w-3xl mx-auto px-2 flex gap-0">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button

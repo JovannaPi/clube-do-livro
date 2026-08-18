@@ -66,7 +66,7 @@ export default function ModuloConfig({ config, livros, livroAtual, usuario }: Pr
     <div className="space-y-6">
       {/* Personalização */}
       <section className="card p-5 space-y-4">
-        <h2 className="font-semibold text-[#2d2d2d]">Personalização</h2>
+        <h2 className="font-semibold text-[#2d2d2d] dark:text-zinc-100">Personalização</h2>
         <div className="space-y-2">
           <label className="text-xs text-[#9a8f8f] font-medium">Nome do clube</label>
           <input className="input" value={nomeclube} onChange={e => setNome(e.target.value)} placeholder="Clube do Livro ♥" />
@@ -103,7 +103,7 @@ export default function ModuloConfig({ config, livros, livroAtual, usuario }: Pr
 
       {/* Backup */}
       <section className="card p-5 space-y-3">
-        <h2 className="font-semibold text-[#2d2d2d] flex items-center gap-2"><Download size={16} className="text-[#e07a5f]" /> Backup</h2>
+        <h2 className="font-semibold text-[#2d2d2d] dark:text-zinc-100 flex items-center gap-2"><Download size={16} className="text-[#e07a5f]" /> Backup</h2>
         <p className="text-xs text-[#9a8f8f]">
           Baixa um arquivo com todos os livros, diários, teorias, comentários e premiações — uma cópia de segurança pra guardar por fora do Firebase.
         </p>
@@ -114,12 +114,12 @@ export default function ModuloConfig({ config, livros, livroAtual, usuario }: Pr
       </section>
 
       {/* Info */}
-      <div className="bg-gray-50 rounded-2xl p-4 text-xs text-[#9a8f8f] space-y-1">
-        <p className="font-medium text-gray-500">Estrutura do Firestore</p>
-        <p>• <code className="bg-gray-100 px-1 rounded">config/app</code> — configurações globais</p>
-        <p>• <code className="bg-gray-100 px-1 rounded">livros/{"{id}"}</code> — dados dos livros</p>
-        <p>• <code className="bg-gray-100 px-1 rounded">livros/{"{id}"}/capitulos/{"{n}"}</code> — diário + segredos</p>
-        <p>• <code className="bg-gray-100 px-1 rounded">premiacoes/{"{livroId}"}</code> — premiações</p>
+      <div className="bg-gray-50 dark:bg-zinc-800 rounded-2xl p-4 text-xs text-[#9a8f8f] space-y-1">
+        <p className="font-medium text-gray-500 dark:text-zinc-400">Estrutura do Firestore</p>
+        <p>• <code className="bg-gray-100 dark:bg-zinc-800 px-1 rounded">config/app</code> — configurações globais</p>
+        <p>• <code className="bg-gray-100 dark:bg-zinc-800 px-1 rounded">livros/{"{id}"}</code> — dados dos livros</p>
+        <p>• <code className="bg-gray-100 dark:bg-zinc-800 px-1 rounded">livros/{"{id}"}/capitulos/{"{n}"}</code> — diário + segredos</p>
+        <p>• <code className="bg-gray-100 dark:bg-zinc-800 px-1 rounded">premiacoes/{"{livroId}"}</code> — premiações</p>
       </div>
     </div>
   );
@@ -153,7 +153,7 @@ function CartasFuturo({ livro }: { livro: Livro }) {
     <section className="card p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Mail size={18} className="text-[#e07a5f]" />
-        <h2 className="font-semibold text-[#2d2d2d]">Cartas para o futuro</h2>
+        <h2 className="font-semibold text-[#2d2d2d] dark:text-zinc-100">Cartas para o futuro</h2>
       </div>
       <p className="text-xs text-[#9a8f8f]">
         Escrevam o que esperam do livro antes de começar. As cartas ficam bloqueadas e são reveladas quando concluírem.
@@ -163,11 +163,11 @@ function CartasFuturo({ livro }: { livro: Livro }) {
         <div className="space-y-3">
           <div className="bg-[#fdf0ec] rounded-xl p-4">
             <p className="text-xs font-medium text-[#e07a5f] mb-1">Jovanna escreveu:</p>
-            <p className="text-sm italic text-gray-700">"{livro.cartaJovanna}"</p>
+            <p className="text-sm italic text-gray-700 dark:text-zinc-300">"{livro.cartaJovanna}"</p>
           </div>
           <div className="bg-[#eef5f1] rounded-xl p-4">
             <p className="text-xs font-medium text-[#5f8f7a] mb-1">Leticia escreveu:</p>
-            <p className="text-sm italic text-gray-700">"{livro.cartaLeticia}"</p>
+            <p className="text-sm italic text-gray-700 dark:text-zinc-300">"{livro.cartaLeticia}"</p>
           </div>
         </div>
       ) : (
@@ -222,7 +222,7 @@ function NotasFinais({ livro, usuario }: { livro: Livro; usuario: UserId }) {
   if (minhaNota != null) {
     return (
       <section className="card p-5 space-y-2">
-        <h2 className="font-semibold text-[#2d2d2d]">Notas finais — {livro.titulo}</h2>
+        <h2 className="font-semibold text-[#2d2d2d] dark:text-zinc-100">Notas finais — {livro.titulo}</h2>
         <p className="text-sm text-[#9a8f8f]">
           Você já deu sua nota: <strong style={{ color: cor }}>{minhaNota}/10</strong>.
           {notaOutra == null && ` Assim que ${outra === "jovanna" ? "Jovanna" : "Leticia"} terminar de ler, o livro fica concluído.`}
@@ -255,7 +255,7 @@ function NotasFinais({ livro, usuario }: { livro: Livro; usuario: UserId }) {
 
   return (
     <section className="card p-5 space-y-4">
-      <h2 className="font-semibold text-[#2d2d2d]">Terminei de ler — {livro.titulo}</h2>
+      <h2 className="font-semibold text-[#2d2d2d] dark:text-zinc-100">Terminei de ler — {livro.titulo}</h2>
       <p className="text-xs text-[#9a8f8f]">Dê sua nota final. O livro vai pra fila de troca até {outra === "jovanna" ? "Jovanna" : "Leticia"} também terminar.</p>
       <NotaSlider label={usuario === "jovanna" ? "Jovanna" : "Leticia"} value={nota} onChange={setNota} cor={cor} />
       <button onClick={salvar} disabled={salvando} className="btn-primary w-full flex items-center justify-center gap-2">

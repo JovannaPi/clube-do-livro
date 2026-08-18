@@ -83,7 +83,22 @@ body {
 
 .badge-rose { @apply text-xs bg-[#fdf0ec] text-[#e07a5f] px-2.5 py-1 rounded-full font-medium; }
 .badge-sage { @apply text-xs bg-[#eef5f1] text-[#5f8f7a] px-2.5 py-1 rounded-full font-medium; }
-.badge-gray { @apply text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full font-medium; }
+.badge-gray { @apply text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 px-2.5 py-1 rounded-full font-medium; }
+
+/* Card com gradiente na cor da usuária ativa (ex: Roleta) — muda com o tema */
+.card-destaque {
+  background: linear-gradient(135deg, var(--cor-usuario-bg), white);
+  border: 2px solid var(--cor-usuario-ring);
+}
+.dark .card-destaque {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cor-usuario-bg) 22%, transparent), #18181b);
+}
+
+/* Fade nas bordas da barra de abas, indicando que dá pra rolar */
+.tabs-fade {
+  mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 28px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 28px), transparent);
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }

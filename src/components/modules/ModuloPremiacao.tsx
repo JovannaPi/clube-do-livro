@@ -75,15 +75,15 @@ export default function ModuloPremiacao({ livroAtual, usuario }: Props) {
         const respostaOutra = (premiacao?.[key] as Record<string,string>)?.[outra];
         return (
           <div key={key} className="card p-5 space-y-3">
-            <label className="text-sm font-medium text-[#2d2d2d] flex items-center gap-1.5">
+            <label className="text-sm font-medium text-[#2d2d2d] dark:text-zinc-100 flex items-center gap-1.5">
               <Icon size={15} className="text-[#e07a5f]" /> {label}
             </label>
             <textarea className="textarea" rows={2} placeholder={placeholder}
               value={form[key] ?? ""} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
             {respostaOutra && (
-              <div className="bg-gray-50 rounded-xl p-3">
+              <div className="bg-gray-50 dark:bg-zinc-800 rounded-xl p-3">
                 <p className="text-xs font-medium mb-1" style={{ color: corOutra }}>{nomeOutra} escolheu:</p>
-                <p className="text-sm text-[#2d2d2d]">{respostaOutra}</p>
+                <p className="text-sm text-[#2d2d2d] dark:text-zinc-100">{respostaOutra}</p>
               </div>
             )}
           </div>

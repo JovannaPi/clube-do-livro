@@ -131,12 +131,12 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
 
       {/* Roleta */}
       {!buscaNorm && (
-      <section className="card p-6 space-y-4" style={{ background: `linear-gradient(135deg, ${cor.bg}, white)`, border: `2px solid ${cor.border}` }}>
+      <section className="card card-destaque p-6 space-y-4">
         <div className="flex items-center gap-2 justify-center text-center">
           <Sparkles style={{ color: cor.primary }} className="animate-pulse" size={24} />
           <h2 className="font-serif text-xl font-semibold" style={{ color: cor.primary }}>Roleta: Qual o próximo livro?</h2>
         </div>
-        <p className="text-xs text-gray-600 text-center max-w-sm mx-auto">Deixe o destino escolher qual será a próxima obra que vamos explorar juntas.</p>
+        <p className="text-xs text-gray-600 dark:text-zinc-400 text-center max-w-sm mx-auto">Deixe o destino escolher qual será a próxima obra que vamos explorar juntas.</p>
 
         <button
           onClick={rodarRoleta}
@@ -150,14 +150,14 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
         </button>
 
         {livroSorteado && !sorteando && (
-          <div className="mt-6 p-4 bg-white rounded-2xl shadow-md animate-fade-in space-y-3 text-center max-w-sm mx-auto" style={{ border: `1px solid ${cor.border}` }}>
+          <div className="mt-6 p-4 bg-white dark:bg-zinc-900 rounded-2xl shadow-md animate-fade-in space-y-3 text-center max-w-sm mx-auto" style={{ border: `1px solid ${cor.border}` }}>
             <p className="text-xs font-bold uppercase tracking-wider" style={{ color: cor.primary }}>Livro sorteado!</p>
             {livroSorteado.capaUrl && (
               <img src={livroSorteado.capaUrl} alt="Capa sorteada" className="w-24 h-32 object-cover rounded-xl shadow-sm mx-auto" />
             )}
             <div>
-              <h3 className="font-serif font-bold text-lg text-[#2d2d2d]">{livroSorteado.titulo}</h3>
-              <p className="text-xs text-gray-500">{livroSorteado.autor}</p>
+              <h3 className="font-serif font-bold text-lg text-[#2d2d2d] dark:text-zinc-100">{livroSorteado.titulo}</h3>
+              <p className="text-xs text-gray-500 dark:text-zinc-400">{livroSorteado.autor}</p>
             </div>
             <div className="flex gap-2 pt-2 flex-col">
               <button
@@ -165,8 +165,8 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                 className="w-full text-white py-3 rounded-xl text-xs font-bold transition-colors"
                 style={{ backgroundColor: cor.primary }}
               >Começar a ler este livro</button>
-              <button onClick={() => setLivroDetalhes(livroSorteado)} className="w-full bg-transparent hover:bg-gray-50 text-gray-600 border border-gray-200 py-3 rounded-xl text-xs font-bold transition-colors">Ver detalhes</button>
-              <button onClick={() => setLivroSorteado(null)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 py-3 rounded-xl text-xs font-bold transition-colors">Fechar sorteio</button>
+              <button onClick={() => setLivroDetalhes(livroSorteado)} className="w-full bg-transparent hover:bg-gray-50 dark:hover:bg-zinc-800 text-gray-600 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700 py-3 rounded-xl text-xs font-bold transition-colors">Ver detalhes</button>
+              <button onClick={() => setLivroSorteado(null)} className="w-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-zinc-300 py-3 rounded-xl text-xs font-bold transition-colors">Fechar sorteio</button>
             </div>
           </div>
         )}
@@ -192,9 +192,9 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                       <span className="badge-gray mb-1 inline-block" style={{ color: corLeitor.primary, backgroundColor: corLeitor.bg }}>
                         {NOME[leitor]} está lendo
                       </span>
-                      <h3 className="font-serif text-xl font-semibold text-[#2d2d2d]">{livro.titulo}</h3>
+                      <h3 className="font-serif text-xl font-semibold text-[#2d2d2d] dark:text-zinc-100">{livro.titulo}</h3>
                       <p className="text-sm text-[#9a8f8f] mb-2">{livro.autor}</p>
-                      {livro.sinopse && <p className="text-sm text-gray-600 line-clamp-3">{livro.sinopse}</p>}
+                      {livro.sinopse && <p className="text-sm text-gray-600 dark:text-zinc-400 line-clamp-3">{livro.sinopse}</p>}
                       <div className="flex items-center gap-2 mt-3 flex-wrap">
                         {livro.genero && <span className="badge-rose">{livro.genero}</span>}
                         {dataInicio && <span className="badge-gray">Iniciado em {dataInicio}</span>}
@@ -325,7 +325,7 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
       {/* Modal novo livro */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="card w-full max-w-md p-6 space-y-3 bg-white max-h-[85vh] overflow-y-auto">
+          <div className="card w-full max-w-md p-6 space-y-3 bg-white dark:bg-zinc-900 max-h-[85vh] overflow-y-auto">
             <h3 className="font-semibold text-lg">Novo livro</h3>
             <BuscaLivroOnline onSelecionar={dados => setForm(f => ({ ...f, ...dados }))} />
             <div className="border-t border-gray-100 pt-3">
@@ -361,7 +361,7 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
       {/* Modal detalhes */}
       {livroDetalhes && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="card w-full max-w-md p-6 space-y-4 bg-white relative max-h-[85vh] overflow-y-auto shadow-2xl" style={{ borderTop: `4px solid ${cor.primary}` }}>
+          <div className="card w-full max-w-md p-6 space-y-4 bg-white dark:bg-zinc-900 relative max-h-[85vh] overflow-y-auto shadow-2xl" style={{ borderTop: `4px solid ${cor.primary}` }}>
             {isEditing ? (
               <div className="space-y-3">
                 <h3 className="font-serif text-xl font-semibold text-center border-b pb-2">Editar Informações</h3>
@@ -387,23 +387,23 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                 </div>
                 <div className="flex gap-2 pt-2 flex-col">
                   <button onClick={salvarEdicao} className="w-full text-white py-3 rounded-xl font-bold transition-colors" style={{ backgroundColor: cor.primary }}>Salvar alterações</button>
-                  <button onClick={() => setIsEditing(false)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
+                  <button onClick={() => setIsEditing(false)} className="w-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 text-gray-600 dark:text-zinc-400 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
                 </div>
               </div>
             ) : (
               <>
-                <h3 className="font-serif text-2xl font-semibold text-[#2d2d2d] text-center border-b pb-3">{livroDetalhes.titulo}</h3>
+                <h3 className="font-serif text-2xl font-semibold text-[#2d2d2d] dark:text-zinc-100 text-center border-b pb-3">{livroDetalhes.titulo}</h3>
                 {livroDetalhes.capaUrl && (
                   <img src={livroDetalhes.capaUrl} alt="capa" className="w-36 h-52 object-cover rounded-xl shadow-md mx-auto" />
                 )}
                 <div>
                   <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">Autor</p>
-                  <p className="text-sm font-medium text-gray-800">{livroDetalhes.autor || "Não informado"}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-zinc-200">{livroDetalhes.autor || "Não informado"}</p>
                 </div>
                 {livroDetalhes.sinopse && (
                   <div>
                     <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">Sinopse</p>
-                    <p className="text-xs text-gray-700 mt-1 bg-gray-50 p-3 rounded-xl leading-relaxed">{livroDetalhes.sinopse}</p>
+                    <p className="text-xs text-gray-700 dark:text-zinc-300 mt-1 bg-gray-50 dark:bg-zinc-800 p-3 rounded-xl leading-relaxed">{livroDetalhes.sinopse}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
@@ -423,13 +423,13 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                 {livroDetalhes.motivoEscolha && (
                   <div>
                     <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">Motivo da escolha</p>
-                    <p className="text-xs text-gray-600 mt-1 italic bg-gray-50 p-3 rounded-xl">"{livroDetalhes.motivoEscolha}"</p>
+                    <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1 italic bg-gray-50 dark:bg-zinc-800 p-3 rounded-xl">"{livroDetalhes.motivoEscolha}"</p>
                   </div>
                 )}
                 {livroDetalhes.sugeridoPor && (
                   <div>
                     <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">Sugestão</p>
-                    <p className="text-xs text-gray-700 mt-1 flex items-center gap-1 font-medium">
+                    <p className="text-xs text-gray-700 dark:text-zinc-300 mt-1 flex items-center gap-1 font-medium">
                       <User size={12}/> Sugerido por {livroDetalhes.sugeridoPor === "jovanna" ? "Jovanna" : "Leticia"}
                     </p>
                   </div>
@@ -475,7 +475,7 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                   >
                     <Trash2 size={16} /> Excluir livro
                   </button>
-                  <button onClick={() => setLivroDetalhes(null)} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 py-3 rounded-xl font-bold transition-colors">Fechar detalhes</button>
+                  <button onClick={() => setLivroDetalhes(null)} className="w-full bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 text-gray-600 dark:text-zinc-400 py-3 rounded-xl font-bold transition-colors">Fechar detalhes</button>
                 </div>
               </>
             )}
@@ -506,7 +506,7 @@ function ProgressoCapitulos({ livroId, totalCapitulos, cor }: { livroId: string;
   const porcentagem = totalCapitulos > 0 ? Math.round((qtdConcluidos / totalCapitulos) * 100) : 0;
 
   return (
-    <div className="border-t pt-4 space-y-3 bg-gray-50 p-4 rounded-2xl animate-fade-in">
+    <div className="border-t pt-4 space-y-3 bg-gray-50 dark:bg-zinc-800 p-4 rounded-2xl animate-fade-in">
       <div className="flex justify-between text-xs font-bold text-[#9a8f8f] uppercase tracking-wider">
         <span>Progresso de leitura</span>
         <span style={{ color: cor }}>{porcentagem}%</span>
@@ -514,7 +514,7 @@ function ProgressoCapitulos({ livroId, totalCapitulos, cor }: { livroId: string;
       <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
         <div className="h-3 rounded-full transition-all duration-500" style={{ width: `${porcentagem}%`, backgroundColor: cor }} />
       </div>
-      <p className="text-xs font-bold text-[#2d2d2d]">
+      <p className="text-xs font-bold text-[#2d2d2d] dark:text-zinc-100">
         Capítulos concluídos: {qtdConcluidos} de {totalCapitulos}
       </p>
       <div className="grid grid-cols-5 gap-2 pt-2">
@@ -543,7 +543,7 @@ function Section({ title, icon, count, children }: { title: string; icon: React.
       <button onClick={()=>setOpen(o=>!o)} className="flex items-center gap-2 mb-3 w-full text-left">
         <span className="text-[#9a8f8f]">{icon}</span>
         <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider">{title}</h2>
-        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{count}</span>
+        <span className="text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 px-2 py-0.5 rounded-full">{count}</span>
         <span className="ml-auto text-gray-300 text-xs">{open?"▲":"▼"}</span>
       </button>
       {open && <div className="space-y-3">{children}</div>}
@@ -562,12 +562,12 @@ function LivroCard({ livro, renderStars, actions, extra }: {
       <div className="flex gap-3">
         {livro.capaUrl
           ? <img src={livro.capaUrl} alt="capa" className="w-12 h-16 object-cover rounded-md shadow-sm flex-shrink-0" />
-          : <div className="w-12 h-16 bg-gray-100 rounded-md flex-shrink-0 flex items-center justify-center"><BookOpen size={20} className="text-gray-300"/></div>
+          : <div className="w-12 h-16 bg-gray-100 dark:bg-zinc-800 rounded-md flex-shrink-0 flex items-center justify-center"><BookOpen size={20} className="text-gray-300"/></div>
         }
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-[#2d2d2d] truncate">{livro.titulo}</h3>
+          <h3 className="font-medium text-[#2d2d2d] dark:text-zinc-100 truncate">{livro.titulo}</h3>
           <p className="text-xs text-[#9a8f8f]">{livro.autor}</p>
-          {livro.motivoEscolha && <p className="text-xs text-gray-500 mt-1 italic">"{livro.motivoEscolha}"</p>}
+          {livro.motivoEscolha && <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1 italic">"{livro.motivoEscolha}"</p>}
           {livro.sugeridoPor && (
             <p className="text-xs text-[#9a8f8f] mt-1 flex items-center gap-1">
               <User size={11}/> sugestão de {livro.sugeridoPor === "jovanna" ? "Jovanna" : "Leticia"}
@@ -686,12 +686,12 @@ function BuscaLivroOnline({ onSelecionar }: { onSelecionar: (dados: Partial<Livr
         <div className="space-y-1 max-h-56 overflow-y-auto border border-gray-100 rounded-xl p-1.5">
           {resultados.map(item => (
             <button key={item.id} type="button" onClick={() => selecionar(item)}
-              className="w-full flex gap-3 items-center p-1.5 rounded-lg hover:bg-gray-50 text-left transition-colors">
+              className="w-full flex gap-3 items-center p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 text-left transition-colors">
               {item.capaUrl
                 ? <img src={item.capaUrl} alt="" className="w-8 h-11 object-cover rounded flex-shrink-0" />
-                : <div className="w-8 h-11 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center"><BookOpen size={12} className="text-gray-300"/></div>}
+                : <div className="w-8 h-11 bg-gray-100 dark:bg-zinc-800 rounded flex-shrink-0 flex items-center justify-center"><BookOpen size={12} className="text-gray-300"/></div>}
               <div className="min-w-0">
-                <p className="text-xs font-medium text-[#2d2d2d] truncate">{item.titulo || "Sem título"}</p>
+                <p className="text-xs font-medium text-[#2d2d2d] dark:text-zinc-100 truncate">{item.titulo || "Sem título"}</p>
                 <p className="text-xs text-[#9a8f8f] truncate">{item.autor || "Autor desconhecido"}</p>
               </div>
             </button>

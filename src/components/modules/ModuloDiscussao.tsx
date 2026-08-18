@@ -49,9 +49,9 @@ export default function ModuloDiscussao({ livroAtual, usuario }: Props) {
   return (
     <div className="flex flex-col gap-4" style={{ minHeight: "70vh" }}>
       {/* Nav capítulo */}
-      <div className="flex items-center justify-between bg-white rounded-2xl p-3 border border-gray-100">
+      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-gray-100">
         <button onClick={() => setCapNum(n => Math.max(1, n-1))} disabled={capNum === 1}
-          className="p-2 rounded-xl hover:bg-gray-50 disabled:opacity-30">
+          className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-30">
           <ChevronLeft size={20} />
         </button>
         <div className="text-center">
@@ -59,7 +59,7 @@ export default function ModuloDiscussao({ livroAtual, usuario }: Props) {
           <p className="text-xs text-[#9a8f8f]">Discussão</p>
         </div>
         <button onClick={() => setCapNum(n => Math.min(maxCap, n+1))} disabled={capNum === maxCap}
-          className="p-2 rounded-xl hover:bg-gray-50 disabled:opacity-30">
+          className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-30">
           <ChevronRight size={20} />
         </button>
       </div>

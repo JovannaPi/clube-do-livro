@@ -77,12 +77,12 @@ export default function ModuloEstatisticas({ livros, config }: Props) {
           <h2 className="text-sm font-medium text-[#9a8f8f] uppercase tracking-wider mb-3">Meta de {anoAtual}</h2>
           <div className="card p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-[#2d2d2d]">
+              <div className="flex items-center gap-2 text-sm font-medium text-[#2d2d2d] dark:text-zinc-100">
                 <Target size={16} className="text-[#e07a5f]" /> {concluidosNoAno} de {metaAnual} livros
               </div>
               <span className="text-sm font-bold text-[#e07a5f]">{pctMeta}%</span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-gray-100 dark:bg-zinc-800 rounded-full h-3 overflow-hidden">
               <div className="h-3 rounded-full bg-[#e07a5f] transition-all duration-500" style={{ width: `${pctMeta}%` }} />
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function ModuloEstatisticas({ livros, config }: Props) {
                 </div>
                 {livro.capaUrl
                   ? <img src={livro.capaUrl} alt="" className="w-10 h-14 object-cover rounded flex-shrink-0" />
-                  : <div className="w-10 h-14 bg-gray-100 rounded flex items-center justify-center flex-shrink-0"><BookOpen size={14} className="text-gray-300"/></div>}
+                  : <div className="w-10 h-14 bg-gray-100 dark:bg-zinc-800 rounded flex items-center justify-center flex-shrink-0"><BookOpen size={14} className="text-gray-300"/></div>}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{livro.titulo}</p>
                   <p className="text-xs text-[#9a8f8f] truncate">{livro.autor}</p>
@@ -166,7 +166,7 @@ export default function ModuloEstatisticas({ livros, config }: Props) {
               <div key={l.id} className="card p-4 flex items-center gap-3">
                 {l.capaUrl
                   ? <img src={l.capaUrl} alt="" className="w-10 h-14 object-cover rounded" />
-                  : <div className="w-10 h-14 bg-gray-100 rounded flex items-center justify-center"><BookOpen size={14} className="text-gray-300"/></div>
+                  : <div className="w-10 h-14 bg-gray-100 dark:bg-zinc-800 rounded flex items-center justify-center"><BookOpen size={14} className="text-gray-300"/></div>
                 }
                 <div className="flex-1">
                   <p className="font-medium text-sm">{l.titulo}</p>
@@ -199,7 +199,7 @@ function StatCard({ icon, label, value, small }: { icon: React.ReactNode; label:
     <div className="card p-4 flex flex-col gap-2">
       {icon}
       <p className="text-xs text-[#9a8f8f]">{label}</p>
-      <p className={`font-semibold text-[#2d2d2d] ${small ? "text-base" : "text-2xl"}`}>{value}</p>
+      <p className={`font-semibold text-[#2d2d2d] dark:text-zinc-100 ${small ? "text-base" : "text-2xl"}`}>{value}</p>
     </div>
   );
 }
@@ -212,7 +212,7 @@ function SugestaoBar({ nome, qtd, total, cor }: { nome: string; qtd: number; tot
         <span className="font-medium" style={{ color: cor }}>{nome}</span>
         <span className="text-[#9a8f8f]">{qtd} sugestões ({pct}%)</span>
       </div>
-      <div className="w-full bg-gray-100 rounded-full h-2">
+      <div className="w-full bg-gray-100 dark:bg-zinc-800 rounded-full h-2">
         <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: cor }} />
       </div>
     </div>

@@ -54,9 +54,9 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
   return (
     <div className="space-y-5">
       {/* Nav capítulo */}
-      <div className="flex items-center justify-between bg-white rounded-2xl p-3 border border-gray-100">
+      <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-gray-100">
         <button onClick={() => setCapNum(n => Math.max(1, n-1))} disabled={capNum === 1}
-          className="p-2 rounded-xl hover:bg-gray-50 disabled:opacity-30">
+          className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-30">
           <ChevronLeft size={20} />
         </button>
         <div className="text-center">
@@ -64,7 +64,7 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
           <p className="text-xs text-[#9a8f8f]">Respostas secretas</p>
         </div>
         <button onClick={() => setCapNum(n => Math.min(maxCap, n+1))} disabled={capNum === maxCap}
-          className="p-2 rounded-xl hover:bg-gray-50 disabled:opacity-30">
+          className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-30">
           <ChevronRight size={20} />
         </button>
       </div>
@@ -80,7 +80,7 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
         <div className="space-y-4">
           <div className="text-center py-4">
             <Unlock size={32} className="mx-auto text-yellow-500 mb-2" />
-            <p className="font-serif text-xl font-semibold text-[#2d2d2d]">Revelado!</p>
+            <p className="font-serif text-xl font-semibold text-[#2d2d2d] dark:text-zinc-100">Revelado!</p>
             <p className="text-sm text-[#9a8f8f]">Ambas enviaram — hora de comparar!</p>
           </div>
           <RespostaCard
@@ -98,9 +98,9 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
         /* Aguardando */
         <div className="card p-8 text-center space-y-3">
           <Lock size={32} className="mx-auto text-[#e07a5f]" />
-          <p className="font-medium text-[#2d2d2d]">Resposta travada</p>
+          <p className="font-medium text-[#2d2d2d] dark:text-zinc-100">Resposta travada</p>
           <p className="text-sm text-[#9a8f8f]">Aguardando {nomeOutra} enviar a dela...</p>
-          <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+          <div className="w-full bg-gray-100 dark:bg-zinc-800 rounded-full h-1.5 mt-2">
             <div className="bg-[#e07a5f] h-1.5 rounded-full w-1/2" />
           </div>
           <p className="text-xs text-[#9a8f8f]">1 de 2 respostas</p>
@@ -108,7 +108,7 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
       ) : (
         /* Formulário */
         <div className="card p-5 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-[#2d2d2d]">
+          <div className="flex items-center gap-2 text-sm font-medium text-[#2d2d2d] dark:text-zinc-100">
             <Lock size={16} className="text-[#e07a5f]" />
             Sua teoria secreta
           </div>
@@ -132,7 +132,7 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
 
 function StatusPill({ nome, enviou, color }: { nome: string; enviou?: boolean; color: string }) {
   return (
-    <div className={`flex-1 flex items-center gap-2 p-3 rounded-xl border ${enviou ? "border-green-200 bg-green-50" : "border-gray-100 bg-white"}`}>
+    <div className={`flex-1 flex items-center gap-2 p-3 rounded-xl border ${enviou ? "border-green-200 bg-green-50" : "border-gray-100 bg-white dark:bg-zinc-900"}`}>
       <div className={`w-2 h-2 rounded-full ${enviou ? "bg-green-400" : "bg-gray-200"}`} />
       <span className="text-sm font-medium" style={{ color: enviou ? "#16a34a" : "#9a8f8f" }}>{nome}</span>
       {enviou && <span className="text-xs text-green-600 ml-auto">✓ enviou</span>}
@@ -145,7 +145,7 @@ function RespostaCard({ nome, cor, teoria, emocoes }: { nome: string; cor: strin
     <div className="card p-5" style={{ borderLeft: `3px solid ${cor}` }}>
       <p className="text-sm font-medium mb-2" style={{ color: cor }}>{nome}</p>
       {emocoes?.length ? <p className="text-lg mb-2">{emocoes.join(" ")}</p> : null}
-      <p className="text-sm text-[#2d2d2d]">{teoria || <span className="italic text-[#9a8f8f]">(não preenchido)</span>}</p>
+      <p className="text-sm text-[#2d2d2d] dark:text-zinc-100">{teoria || <span className="italic text-[#9a8f8f]">(não preenchido)</span>}</p>
     </div>
   );
 }

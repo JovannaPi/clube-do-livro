@@ -154,7 +154,7 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
         <div className="flex gap-4 items-start">
           {livro.capaUrl
             ? <img src={livro.capaUrl} alt="" className="w-16 rounded-xl shadow-md flex-shrink-0" style={{ height: "88px", objectFit: "cover" }} />
-            : <div className="w-16 h-[88px] bg-white/50 rounded-xl flex-shrink-0 flex items-center justify-center"><BookOpen size={24} className="text-gray-300"/></div>
+            : <div className="w-16 h-[88px] bg-white dark:bg-zinc-900/50 rounded-xl flex-shrink-0 flex items-center justify-center"><BookOpen size={24} className="text-gray-300"/></div>
           }
           <div className="flex-1 min-w-0">
             <p className="font-serif text-xl font-bold text-[#2d2d2d] dark:text-zinc-100 leading-tight flex items-center gap-1.5">
@@ -178,13 +178,13 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
 
         <div className="flex gap-3 mt-4 flex-wrap">
           {livro.notaJovanna != null && (
-            <div className="flex items-center gap-2 bg-white/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
+            <div className="flex items-center gap-2 bg-white dark:bg-zinc-900/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
               <Star size={13} className="text-[#e07a5f]" />
               <span className="text-sm"><span className="text-[#e07a5f] font-medium">Jovanna</span> · {livro.notaJovanna}/10</span>
             </div>
           )}
           {livro.notaLeticia != null && (
-            <div className="flex items-center gap-2 bg-white/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
+            <div className="flex items-center gap-2 bg-white dark:bg-zinc-900/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
               <Star size={13} className="text-[#81b29a]" />
               <span className="text-sm"><span className="text-[#81b29a] font-medium">Leticia</span> · {livro.notaLeticia}/10</span>
             </div>
@@ -317,7 +317,7 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
           onClick={() => setFotoAmpliada(null)}
         >
           <img src={fotoAmpliada} alt="" className="max-w-full max-h-full rounded-2xl object-contain" />
-          <button className="absolute top-4 right-4 bg-white/20 text-white rounded-full p-2">
+          <button className="absolute top-4 right-4 bg-white dark:bg-zinc-900/20 text-white rounded-full p-2">
             <X size={20} />
           </button>
         </div>
