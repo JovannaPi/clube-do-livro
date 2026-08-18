@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2, Repeat } from "lucide-react";
+import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2, Repeat, XCircle, RotateCcw } from "lucide-react";
 import { salvarLivro, atualizarLivro, updateConfig, excluirLivro, registrarAtividade } from "@/lib/db";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -19,7 +19,7 @@ const COR = {
 };
 
 const NOME = { jovanna: "Jovanna", leticia: "Leticia" } as const;
-const STATUS_LABELS = { planejado: "Planejado", lendo: "Lendo", trocar: "Prontos pra trocar", concluido: "Concluído" };
+const STATUS_LABELS = { planejado: "Planejado", lendo: "Lendo", trocar: "Prontos pra trocar", concluido: "Concluído", abandonado: "Abandonado" };
 
 export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   const cor = COR[usuario];
@@ -31,10 +31,11 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Livro>>({});
 
-  const planejados = livros.filter(l => l.status === "planejado");
-  const lendo      = livros.filter(l => l.status === "lendo");
-  const trocar     = livros.filter(l => l.status === "trocar");
-  const concluidos = livros.filter(l => l.status === "concluido");
+  const planejados  = livros.filter(l => l.status === "planejado");
+  const lendo       = livros.filter(l => l.status === "lendo");
+  const trocar      = livros.filter(l => l.status === "trocar");
+  const concluidos  = livros.filter(l => l.status === "concluido");
+  const abandonados = livros.filter(l => l.status === "abandonado");
 
   function jaLeu(livro: Livro, u: UserId) {
     return u === "jovanna" ? livro.notaJovanna != null : livro.notaLeticia != null;
@@ -57,6 +58,20 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
       await registrarAtividade({ tipo: "troca", usuario, livroId: id, livroTitulo: trocar.find(l=>l.id===id)?.titulo ?? "" });
     }
     setLivroSorteado(null);
+  }
+
+  async function desistir(livro: Livro) {
+    if (!confirm(`Tem certeza que quer desistir de "${livro.titulo}"?`)) return;
+    const leitor = livro.leitorAtual ?? usuario;
+    const campoConfig = leitor === "jovanna" ? "livroAtualIdJovanna" : "livroAtualIdLeticia";
+    await atualizarLivro(livro.id, { status: "abandonado", leitorAtual: undefined });
+    await updateConfig({ [campoConfig]: "" } as Partial<ConfigApp>);
+    setLivroDetalhes(null);
+  }
+
+  async function recomecar(livro: Livro) {
+    await atualizarLivro(livro.id, { status: "planejado" });
+    setLivroDetalhes(null);
   }
 
   function rodarRoleta() {
@@ -166,9 +181,14 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                         {dataInicio && <span className="badge-gray">Iniciado em {dataInicio}</span>}
                         {livro.totalCapitulos && <span className="badge-gray">{livro.totalCapitulos} capítulos</span>}
                       </div>
-                      <button onClick={() => setLivroDetalhes(livro)} className="btn-ghost text-xs py-1.5 px-3 mt-3 flex items-center gap-1.5">
-                        <Eye size={12} /> Ver detalhes completos
-                      </button>
+                      <div className="flex gap-2 mt-3">
+                        <button onClick={() => setLivroDetalhes(livro)} className="btn-ghost text-xs py-1.5 px-3 flex items-center gap-1.5">
+                          <Eye size={12} /> Ver detalhes completos
+                        </button>
+                        <button onClick={() => desistir(livro)} className="text-xs py-1.5 px-3 rounded-xl font-medium text-red-500 border border-red-200 hover:bg-red-50 transition-colors flex items-center gap-1.5">
+                          <XCircle size={12} /> Desistir
+                        </button>
+                      </div>
                     </div>
                   </div>
                   {livro.totalCapitulos && (
@@ -252,6 +272,27 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
           />
         ))}
       </Section>
+
+      {abandonados.length > 0 && (
+        <Section title="Abandonados" icon={<XCircle size={15}/>} count={abandonados.length}>
+          {abandonados.map(l => (
+            <LivroCard key={l.id} livro={l} renderStars={renderStars}
+              actions={
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => recomecar(l)}
+                    className="text-white text-xs py-1.5 px-3 rounded-xl font-medium transition-all active:scale-95 flex items-center gap-1"
+                    style={{ backgroundColor: cor.primary }}
+                  ><RotateCcw size={12}/> Recomeçar depois</button>
+                  <button onClick={() => setLivroDetalhes(l)} className="btn-ghost text-xs py-1.5 px-3 flex items-center gap-1">
+                    <Eye size={12}/> Detalhes
+                  </button>
+                </div>
+              }
+            />
+          ))}
+        </Section>
+      )}
 
       <button
         onClick={() => setShowForm(true)}
@@ -391,6 +432,14 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                 )}
                 <div className="flex gap-2 pt-2 flex-col">
                   <button onClick={() => abrirEdicao(livroDetalhes)} className="w-full text-white py-3 rounded-xl font-bold transition-colors" style={{ backgroundColor: cor.primary }}>Editar informações</button>
+                  {livroDetalhes.status === "lendo" && (
+                    <button
+                      onClick={() => desistir(livroDetalhes)}
+                      className="w-full border border-red-200 text-red-500 hover:bg-red-50 py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <XCircle size={16} /> Desistir deste livro
+                    </button>
+                  )}
                   <button
                     onClick={async () => {
                       if (confirm("Tem certeza que deseja excluir este livro?")) {

@@ -22,8 +22,8 @@ export interface Livro {
   totalCapitulos: number;
   // "planejado": na fila. "lendo": alguém está lendo agora (ver leitorAtual).
   // "trocar": uma já leu e terminou, esperando a outra pegar o livro.
-  // "concluido": as duas já leram e avaliaram.
-  status: "planejado" | "lendo" | "trocar" | "concluido";
+  // "concluido": as duas já leram e avaliaram. "abandonado": alguém desistiu no meio.
+  status: "planejado" | "lendo" | "trocar" | "concluido" | "abandonado";
   leitorAtual?: UserId;
   sugeridoPor?: UserId;
   motivoEscolha?: string;
