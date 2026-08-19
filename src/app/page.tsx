@@ -177,12 +177,12 @@ export default function Home() {
 
       {/* Tabs */}
       <nav className="tabs-fade bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 overflow-x-auto sticky top-[61px] z-20 transition-colors duration-200">
-        <div className="max-w-3xl mx-auto px-2 flex gap-0">
+        <div className="max-w-3xl mx-auto px-2 flex gap-0 min-w-max sm:min-w-0">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className="flex flex-col items-center gap-0.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-all"
+              className="flex-1 flex flex-col items-center gap-0.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-all"
               style={
                 tab === id
                   ? { borderColor: cor.primary, color: cor.primary }

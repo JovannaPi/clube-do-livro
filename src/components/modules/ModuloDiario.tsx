@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Save, BookOpen, Mail, Lock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, BookOpen, Mail, Lock, CheckCircle2 } from "lucide-react";
 import { listenCapitulo, salvarCapitulo, registrarAtividade, atualizarLivro } from "@/lib/db";
 import { useCapituloLembrado } from "@/hooks/useCapituloLembrado";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 import type { Livro, Capitulo, UserId } from "@/types";
 
 const EMOCOES = ["❤️","😭","😲","😡","🤔","😂","😰","🥰","😤","🤯"];
@@ -62,20 +64,10 @@ export default function ModuloDiario({ livroAtual, usuario }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* Livro atual */}
-      <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 rounded-2xl p-3 border-l-4"
-        style={{ borderLeftColor: usuario === "jovanna" ? "#e07a5f" : "#81b29a" }}>
-        {livroAtual.capaUrl
-          ? <img src={livroAtual.capaUrl} alt="" className="w-9 h-13 object-cover rounded shadow-sm flex-shrink-0" />
-          : <div className="w-9 h-13 bg-gray-100 dark:bg-zinc-800 rounded flex items-center justify-center flex-shrink-0"><BookOpen size={16} className="text-gray-300"/></div>}
-        <div className="min-w-0">
-          <p className="font-serif font-semibold text-[#2d2d2d] dark:text-zinc-100 truncate">{livroAtual.titulo}</p>
-          <p className="text-xs text-[#9a8f8f] truncate">{livroAtual.autor}</p>
-        </div>
-      </div>
-
-      {/* Cartas do futuro, só antes de terminar */}
-      <CartasFuturo livro={livroAtual} usuario={usuario} />
+      {/* Carta pro futuro, só enquanto ainda não foi selada — depois de selar isso vai lá pro final */}
+      {!(usuario === "jovanna" ? livroAtual.cartaJovannaEnviada : livroAtual.cartaLeticiaEnviada) && (
+        <CartaFormulario livro={livroAtual} usuario={usuario} />
+      )}
 
       {/* Nav capítulo */}
       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-gray-100">
@@ -85,6 +77,7 @@ export default function ModuloDiario({ livroAtual, usuario }: Props) {
         </button>
         <div className="text-center">
           <p className="font-serif font-semibold text-[#2d2d2d] dark:text-zinc-100">Capítulo {capNum}</p>
+          <p className="text-xs text-[#9a8f8f]">{livroAtual.titulo}</p>
         </div>
         <button onClick={() => setCapNum(n => Math.min(maxCap, n+1))} disabled={capNum === maxCap}
           className="p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-30 transition-colors">
@@ -134,6 +127,11 @@ export default function ModuloDiario({ livroAtual, usuario }: Props) {
         {salvando ? "Salvando..." : salvo ? "✓ Salvo!" : "Salvar diário"}
       </button>
 
+      {/* Depois de selada, a carta some do topo e vira só um lembrete aqui embaixo */}
+      {(usuario === "jovanna" ? livroAtual.cartaJovannaEnviada : livroAtual.cartaLeticiaEnviada) && (
+        <CartaStatus livro={livroAtual} usuario={usuario} />
+      )}
+
       {/* Terminar de ler, sempre por último — é o fim natural da leitura */}
       <NotasFinais livro={livroAtual} usuario={usuario} />
     </div>
@@ -149,20 +147,9 @@ function EmptyState({ msg }: { msg: string }) {
   );
 }
 
-function CartasFuturo({ livro, usuario }: { livro: Livro; usuario: UserId }) {
+function CartaFormulario({ livro, usuario }: { livro: Livro; usuario: UserId }) {
   const [carta, setCarta] = useState(usuario === "jovanna" ? livro.cartaJovanna ?? "" : livro.cartaLeticia ?? "");
   const [salvando, setSalvando] = useState(false);
-
-  useEffect(() => {
-    setCarta(usuario === "jovanna" ? livro.cartaJovanna ?? "" : livro.cartaLeticia ?? "");
-  }, [livro.id, usuario, livro.cartaJovanna, livro.cartaLeticia]);
-
-  const euEnviei = usuario === "jovanna" ? livro.cartaJovannaEnviada : livro.cartaLeticiaEnviada;
-  const outra: UserId = usuario === "jovanna" ? "leticia" : "jovanna";
-  const nomeOutra = outra === "jovanna" ? "Jovanna" : "Leticia";
-  const outraEnviou = outra === "jovanna" ? livro.cartaJovannaEnviada : livro.cartaLeticiaEnviada;
-  const ambasEnviaram = livro.cartaJovannaEnviada && livro.cartaLeticiaEnviada;
-  const reveladas = livro.status === "concluido" && ambasEnviaram;
 
   async function salvar() {
     setSalvando(true);
@@ -172,6 +159,29 @@ function CartasFuturo({ livro, usuario }: { livro: Livro; usuario: UserId }) {
     await registrarAtividade({ tipo: "carta", usuario, livroId: livro.id, livroTitulo: livro.titulo });
     setSalvando(false);
   }
+
+  return (
+    <section className="card p-5 space-y-3">
+      <div className="flex items-center gap-2">
+        <Mail size={16} className="text-[#e07a5f]" />
+        <h2 className="font-semibold text-sm text-[#2d2d2d] dark:text-zinc-100">Carta para o futuro</h2>
+      </div>
+      <p className="text-xs text-[#9a8f8f]">O que você espera deste livro? Fica selado até vocês duas terminarem.</p>
+      <textarea className="textarea" rows={2} placeholder="O que você espera deste livro?"
+        value={carta} onChange={e => setCarta(e.target.value)} />
+      <button onClick={salvar} disabled={salvando || !carta.trim()} className="btn-ghost text-sm py-2 px-4 flex items-center gap-1.5 w-full justify-center">
+        <Lock size={13}/> Selar carta
+      </button>
+    </section>
+  );
+}
+
+function CartaStatus({ livro, usuario }: { livro: Livro; usuario: UserId }) {
+  const outra: UserId = usuario === "jovanna" ? "leticia" : "jovanna";
+  const nomeOutra = outra === "jovanna" ? "Jovanna" : "Leticia";
+  const outraEnviou = outra === "jovanna" ? livro.cartaJovannaEnviada : livro.cartaLeticiaEnviada;
+  const ambasEnviaram = livro.cartaJovannaEnviada && livro.cartaLeticiaEnviada;
+  const reveladas = livro.status === "concluido" && ambasEnviaram;
 
   if (reveladas) {
     return (
@@ -192,27 +202,10 @@ function CartasFuturo({ livro, usuario }: { livro: Livro; usuario: UserId }) {
     );
   }
 
-  if (euEnviei) {
-    return (
-      <section className="card p-4 flex items-center gap-2 text-xs text-[#9a8f8f]">
-        <Lock size={13} />
-        Sua carta está selada. {outraEnviou ? "Vai revelar quando o livro for concluído." : `Esperando ${nomeOutra} escrever a dela.`}
-      </section>
-    );
-  }
-
   return (
-    <section className="card p-5 space-y-3">
-      <div className="flex items-center gap-2">
-        <Mail size={16} className="text-[#e07a5f]" />
-        <h2 className="font-semibold text-sm text-[#2d2d2d] dark:text-zinc-100">Carta para o futuro</h2>
-      </div>
-      <p className="text-xs text-[#9a8f8f]">O que você espera deste livro? Fica selado até vocês duas terminarem.</p>
-      <textarea className="textarea" rows={2} placeholder="O que você espera deste livro?"
-        value={carta} onChange={e => setCarta(e.target.value)} />
-      <button onClick={salvar} disabled={salvando || !carta.trim()} className="btn-ghost text-sm py-2 px-4 flex items-center gap-1.5 w-full justify-center">
-        <Lock size={13}/> Selar carta
-      </button>
+    <section className="card p-4 flex items-center gap-2 text-xs text-[#9a8f8f]">
+      <Lock size={13} />
+      Sua carta está selada. {outraEnviou ? "Vai revelar quando o livro for concluído." : `Esperando ${nomeOutra} escrever a dela.`}
     </section>
   );
 }
@@ -222,18 +215,43 @@ function NotasFinais({ livro, usuario }: { livro: Livro; usuario: UserId }) {
   const [nota, setNota] = useState<number>(minhaNota ?? 5);
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
+  const [capsRespondidos, setCapsRespondidos] = useState(0);
 
   useEffect(() => { setNota(minhaNota ?? 5); }, [livro.id, minhaNota]);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "livros", livro.id, "capitulos"), snap => {
+      const respondidos = snap.docs.filter(d => d.data()[`${usuario}_enviou`]).length;
+      setCapsRespondidos(respondidos);
+    });
+    return () => unsub();
+  }, [livro.id, usuario]);
 
   const outra: UserId = usuario === "jovanna" ? "leticia" : "jovanna";
   const notaOutra = outra === "jovanna" ? livro.notaJovanna : livro.notaLeticia;
   const cor = usuario === "jovanna" ? "#e07a5f" : "#81b29a";
+  const totalCapitulos = livro.totalCapitulos ?? 0;
+  const todosRespondidos = totalCapitulos > 0 && capsRespondidos >= totalCapitulos;
 
   if (minhaNota != null) {
     return (
       <section className="card p-4 text-xs text-[#9a8f8f]">
         Você já deu sua nota final: <strong style={{ color: cor }}>{minhaNota}/10</strong>.
         {notaOutra == null && ` Assim que ${outra === "jovanna" ? "Jovanna" : "Leticia"} terminar de ler, o livro fica concluído.`}
+      </section>
+    );
+  }
+
+  if (!todosRespondidos) {
+    return (
+      <section className="card p-4 space-y-2 text-xs text-[#9a8f8f]">
+        <p className="flex items-center gap-1.5"><Lock size={12} /> Termine a teoria secreta de todos os capítulos pra poder concluir o livro.</p>
+        {totalCapitulos > 0 && (
+          <div className="w-full bg-gray-100 dark:bg-zinc-800 rounded-full h-1.5">
+            <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.round((capsRespondidos / totalCapitulos) * 100)}%`, backgroundColor: cor }} />
+          </div>
+        )}
+        <p>{capsRespondidos} de {totalCapitulos || "?"} capítulos com teoria enviada no Secreto.</p>
       </section>
     );
   }
@@ -262,7 +280,9 @@ function NotasFinais({ livro, usuario }: { livro: Livro; usuario: UserId }) {
 
   return (
     <section className="card p-5 space-y-4" style={{ borderTop: `3px solid ${cor}` }}>
-      <h2 className="font-semibold text-[#2d2d2d] dark:text-zinc-100">Terminei de ler {livro.titulo}</h2>
+      <h2 className="font-semibold text-[#2d2d2d] dark:text-zinc-100 flex items-center gap-1.5">
+        <CheckCircle2 size={16} style={{ color: cor }} /> Terminei de ler {livro.titulo}
+      </h2>
       <p className="text-xs text-[#9a8f8f]">Dê sua nota final. O livro vai pra fila de troca até {outra === "jovanna" ? "Jovanna" : "Leticia"} também terminar.</p>
       <NotaSlider value={nota} onChange={setNota} cor={cor} />
       <button onClick={salvar} disabled={salvando} className="btn-primary w-full flex items-center justify-center gap-2">
