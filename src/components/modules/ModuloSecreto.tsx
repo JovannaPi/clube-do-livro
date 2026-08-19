@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import { Lock, Unlock, ChevronLeft, ChevronRight } from "lucide-react";
 import { listenCapitulo, salvarCapitulo,  registrarAtividade} from "@/lib/db";
+import { useCapituloLembrado } from "@/hooks/useCapituloLembrado";
 import type { Livro, Capitulo, UserId } from "@/types";
 
 interface Props { livroAtual?: Livro; usuario: UserId; }
 
 export default function ModuloSecreto({ livroAtual, usuario }: Props) {
-  const [capNum, setCapNum] = useState(1);
+  const [capNum, setCapNum] = useCapituloLembrado(livroAtual?.id, usuario);
   const [dados, setDados] = useState<Capitulo>({ numero: 1 });
   const [teoria, setTeoria] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -53,6 +54,17 @@ export default function ModuloSecreto({ livroAtual, usuario }: Props) {
 
   return (
     <div className="space-y-5">
+      {/* Livro atual */}
+      <div className="flex items-center gap-3 bg-white dark:bg-zinc-900 rounded-2xl p-3 border-l-4" style={{ borderLeftColor: corAtual }}>
+        {livroAtual.capaUrl
+          ? <img src={livroAtual.capaUrl} alt="" className="w-9 h-13 object-cover rounded shadow-sm flex-shrink-0" />
+          : <div className="w-9 h-13 bg-gray-100 dark:bg-zinc-800 rounded flex items-center justify-center flex-shrink-0"><Lock size={16} className="text-gray-300"/></div>}
+        <div className="min-w-0">
+          <p className="font-serif font-semibold text-[#2d2d2d] dark:text-zinc-100 truncate">{livroAtual.titulo}</p>
+          <p className="text-xs text-[#9a8f8f] truncate">{livroAtual.autor}</p>
+        </div>
+      </div>
+
       {/* Nav capítulo */}
       <div className="flex items-center justify-between bg-white dark:bg-zinc-900 rounded-2xl p-3 border border-gray-100">
         <button onClick={() => setCapNum(n => Math.max(1, n-1))} disabled={capNum === 1}

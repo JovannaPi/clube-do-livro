@@ -58,14 +58,6 @@ export interface Capitulo {
   leticia_enviou?: boolean;
 }
 
-export interface Comentario {
-  id: string;
-  autor: UserId;
-  texto: string;
-  criadoEm: string;
-  capituloNumero: number;
-}
-
 export interface Premiacao {
   livroId: string;
   melhorPersonagem?: { jovanna?: string; leticia?: string };

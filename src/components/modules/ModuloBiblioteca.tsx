@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2, Repeat, XCircle, RotateCcw, Search } from "lucide-react";
+import { Plus, Star, User, BookOpen, CheckCircle, Clock, Eye, Sparkles, Trash2, Repeat, XCircle, RotateCcw, Search, Mail, Lock } from "lucide-react";
 import { salvarLivro, atualizarLivro, updateConfig, excluirLivro, registrarAtividade } from "@/lib/db";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -31,6 +31,7 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Livro>>({});
   const [busca, setBusca] = useState("");
+  const [livroParaCarta, setLivroParaCarta] = useState<Livro | null>(null);
 
   const buscaNorm = busca.trim().toLowerCase();
   const filtrar = (lista: Livro[]) => buscaNorm
@@ -55,6 +56,12 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
   }
 
   async function definirComoAtual(id: string) {
+    const livroAntigo = livros.find(l => l.status === "lendo" && l.leitorAtual === usuario && l.id !== id);
+    if (livroAntigo) {
+      const continuar = confirm(`Você já está lendo "${livroAntigo.titulo}". Pausar esse livro (ele volta pra fila de Planejados) e começar este agora?`);
+      if (!continuar) return;
+      await atualizarLivro(livroAntigo.id, { status: "planejado", leitorAtual: undefined });
+    }
     const hoje = new Date().toISOString().split("T")[0];
     const campoConfig = usuario === "jovanna" ? "livroAtualIdJovanna" : "livroAtualIdLeticia";
     const campoData   = usuario === "jovanna" ? "dataInicioJovanna"  : "dataInicioLeticia";
@@ -64,6 +71,10 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
       await registrarAtividade({ tipo: "troca", usuario, livroId: id, livroTitulo: trocar.find(l=>l.id===id)?.titulo ?? "" });
     }
     setLivroSorteado(null);
+
+    const livroObj = livros.find(l => l.id === id);
+    const jaEnviei = livroObj && (usuario === "jovanna" ? livroObj.cartaJovannaEnviada : livroObj.cartaLeticiaEnviada);
+    if (livroObj && !jaEnviei) setLivroParaCarta(livroObj);
   }
 
   async function desistir(livro: Livro) {
@@ -211,7 +222,7 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
                     </div>
                   </div>
                   {livro.totalCapitulos && (
-                    <ProgressoCapitulos livroId={livro.id} totalCapitulos={livro.totalCapitulos} cor={corLeitor.primary} />
+                    <ProgressoCapitulos livroId={livro.id} totalCapitulos={livro.totalCapitulos} cor={corLeitor.primary} leitor={leitor} />
                   )}
                 </div>
               );
@@ -482,11 +493,16 @@ export default function ModuloBiblioteca({ livros, config, usuario }: Props) {
           </div>
         </div>
       )}
+
+      {/* Carta pra o futuro, ao começar um livro novo */}
+      {livroParaCarta && (
+        <ModalCartaFutura livro={livroParaCarta} usuario={usuario} onFechar={() => setLivroParaCarta(null)} />
+      )}
     </div>
   );
 }
 
-function ProgressoCapitulos({ livroId, totalCapitulos, cor }: { livroId: string; totalCapitulos: number; cor: string }) {
+function ProgressoCapitulos({ livroId, totalCapitulos, cor, leitor }: { livroId: string; totalCapitulos: number; cor: string; leitor: UserId }) {
   const [capsConcluidos, setCapsConcluidos] = useState<number[]>([]);
 
   useEffect(() => {
@@ -494,12 +510,15 @@ function ProgressoCapitulos({ livroId, totalCapitulos, cor }: { livroId: string;
       const concluidos: number[] = [];
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.jovanna_enviou && data.leticia_enviou) concluidos.push(Number(doc.id));
+        // Conta o progresso de quem está lendo agora — cada uma lê em momentos diferentes,
+        // então não faz sentido exigir que as duas tenham respondido esse capítulo.
+        const jaFez = data[`${leitor}_enviou`] || data[`impressao_${leitor}`] || data[`frase_${leitor}`];
+        if (jaFez) concluidos.push(Number(doc.id));
       });
       setCapsConcluidos(concluidos);
     });
     return () => unsubscribe();
-  }, [livroId]);
+  }, [livroId, leitor]);
 
   const arrayCapitulos = Array.from({ length: totalCapitulos }, (_, i) => i + 1);
   const qtdConcluidos = capsConcluidos.length;
@@ -575,6 +594,44 @@ function LivroCard({ livro, renderStars, actions, extra }: {
           )}
           {extra}
           {actions && <div>{actions}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModalCartaFutura({ livro, usuario, onFechar }: { livro: Livro; usuario: UserId; onFechar: () => void }) {
+  const [carta, setCarta] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const cor = usuario === "jovanna" ? "#e07a5f" : "#81b29a";
+
+  async function selar() {
+    setSalvando(true);
+    const campo = usuario === "jovanna" ? "cartaJovanna" : "cartaLeticia";
+    const campoEnviada = usuario === "jovanna" ? "cartaJovannaEnviada" : "cartaLeticiaEnviada";
+    await atualizarLivro(livro.id, { [campo]: carta, [campoEnviada]: true } as Partial<Livro>);
+    await registrarAtividade({ tipo: "carta", usuario, livroId: livro.id, livroTitulo: livro.titulo });
+    setSalvando(false);
+    onFechar();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="card w-full max-w-md p-6 space-y-4 bg-white dark:bg-zinc-900" style={{ borderTop: `4px solid ${cor}` }}>
+        <div className="flex items-center gap-2">
+          <Mail size={20} style={{ color: cor }} />
+          <h3 className="font-serif text-lg font-semibold text-[#2d2d2d] dark:text-zinc-100">Antes de começar...</h3>
+        </div>
+        <p className="text-sm text-[#9a8f8f]">
+          Escreva uma carta sobre o que você espera de <strong>{livro.titulo}</strong>. Ela fica selada e só é revelada quando vocês duas terminarem o livro.
+        </p>
+        <textarea className="textarea" rows={4} placeholder="O que você espera deste livro?"
+          value={carta} onChange={e => setCarta(e.target.value)} autoFocus />
+        <div className="flex gap-2 flex-col">
+          <button onClick={selar} disabled={salvando || !carta.trim()} className="btn-primary w-full flex items-center justify-center gap-2">
+            <Lock size={15} /> {salvando ? "Selando..." : "Selar carta"}
+          </button>
+          <button onClick={onFechar} className="btn-ghost w-full">Pular por agora</button>
         </div>
       </div>
     </div>

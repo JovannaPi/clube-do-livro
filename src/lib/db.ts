@@ -5,7 +5,7 @@ import {
   addDoc, onSnapshot, query, orderBy, Timestamp, deleteDoc
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Livro, Capitulo, Comentario, ConfigApp, Premiacao } from "@/types";
+import type { Livro, Capitulo, ConfigApp, Premiacao } from "@/types";
 
 // ── Config ──────────────────────────────────────────────
 export const configRef = () => doc(db, "config", "app");
@@ -72,28 +72,6 @@ export function listenCapitulo(livroId: string, num: number, cb: (c: Capitulo) =
 
 export async function salvarCapitulo(livroId: string, num: number, data: Partial<Capitulo>) {
   await setDoc(capituloRef(livroId, num), { numero: num, ...data }, { merge: true });
-}
-
-// ── Comentários ──────────────────────────────────────────
-export const comentariosCol = (livroId: string, capNum: number) =>
-  collection(db, "livros", livroId, "capitulos", String(capNum), "comentarios");
-
-export function listenComentarios(livroId: string, capNum: number, cb: (c: Comentario[]) => void) {
-  const q = query(comentariosCol(livroId, capNum), orderBy("criadoEm", "asc"));
-  return onSnapshot(q, snap => {
-    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Comentario)));
-  });
-}
-
-export async function adicionarComentario(
-  livroId: string, capNum: number,
-  autor: "jovanna" | "leticia", texto: string
-) {
-  await addDoc(comentariosCol(livroId, capNum), {
-    autor, texto,
-    criadoEm: new Date().toISOString(),
-    capituloNumero: capNum,
-  });
 }
 
 // ── Premiações ───────────────────────────────────────────

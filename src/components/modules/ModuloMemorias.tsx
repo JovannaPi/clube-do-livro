@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { BookOpen, Heart, Star, Lock, Unlock, Camera, X, ImagePlus, Quote, Calendar, Trophy, Film, Brain, Zap, Mail } from "lucide-react";
+import { BookOpen, Heart, Star, Lock, Unlock, Camera, X, ImagePlus, Quote, Calendar, Trophy, Film, Brain, Zap, Mail, PenLine, ChevronDown } from "lucide-react";
 import { listenPremiacao } from "@/lib/db";
 import { storage, db } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, collectionGroup, getDocs } from "firebase/firestore";
-import type { Livro, Premiacao, UserId } from "@/types";
+import { doc, onSnapshot, setDoc, updateDoc, arrayUnion, arrayRemove, collectionGroup, getDocs, collection, query, orderBy } from "firebase/firestore";
+import type { Livro, Premiacao, UserId, Capitulo } from "@/types";
 
 interface Props { livros: Livro[]; }
 
@@ -44,14 +44,21 @@ export default function ModuloMemorias({ livros }: Props) {
 
 function MuralFrases({ livros }: { livros: Livro[] }) {
   const [frases, setFrases] = useState<{ texto: string; usuario: UserId; livroTitulo: string }[]>([]);
+  const concluidos = livros.filter(l => l.status === "concluido");
+  const idsConcluidosKey = concluidos.map(l => l.id).sort().join(",");
 
   useEffect(() => {
     async function carregar() {
+      if (concluidos.length === 0) { setFrases([]); return; }
       try {
+        // Só livros concluídos por ambas — nenhuma frase de um livro que
+        // ainda está sendo lido, pra não vazar spoiler pra quem não chegou lá ainda.
+        const idsConcluidos = new Set(concluidos.map(l => l.id));
         const snap = await getDocs(collectionGroup(db, "capitulos"));
         const lista: { texto: string; usuario: UserId; livroTitulo: string }[] = [];
         snap.docs.forEach(d => {
           const livroId = d.ref.parent.parent?.id;
+          if (!livroId || !idsConcluidos.has(livroId)) return;
           const livroTitulo = livros.find(l => l.id === livroId)?.titulo ?? "";
           const data = d.data();
           if (data.frase_jovanna) lista.push({ texto: data.frase_jovanna, usuario: "jovanna", livroTitulo });
@@ -62,8 +69,8 @@ function MuralFrases({ livros }: { livros: Livro[] }) {
         console.error("Erro ao carregar mural de frases:", error);
       }
     }
-    if (livros.length > 0) carregar();
-  }, [livros]);
+    carregar();
+  }, [idsConcluidosKey]);
 
   if (frases.length === 0) return null;
 
@@ -93,12 +100,23 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
   const [fotos, setFotos] = useState<string[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
+  const [capitulos, setCapitulos] = useState<Capitulo[] | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const unsub = listenPremiacao(livro.id, setPremiacao);
     return () => unsub();
   }, [livro.id]);
+
+  useEffect(() => {
+    if (!aberta || capitulos !== null) return;
+    async function carregarCapitulos() {
+      const q = query(collection(db, "livros", livro.id, "capitulos"), orderBy("numero", "asc"));
+      const snap = await getDocs(q);
+      setCapitulos(snap.docs.map(d => d.data() as Capitulo));
+    }
+    carregarCapitulos();
+  }, [aberta, capitulos, livro.id]);
 
   useEffect(() => {
     const fotoRef = doc(db, "memorias_fotos", livro.id);
@@ -154,7 +172,7 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
         <div className="flex gap-4 items-start">
           {livro.capaUrl
             ? <img src={livro.capaUrl} alt="" className="w-16 rounded-xl shadow-md flex-shrink-0" style={{ height: "88px", objectFit: "cover" }} />
-            : <div className="w-16 h-[88px] bg-white dark:bg-zinc-900/50 rounded-xl flex-shrink-0 flex items-center justify-center"><BookOpen size={24} className="text-gray-300"/></div>
+            : <div className="w-16 h-[88px] bg-white/50 dark:bg-zinc-800/50 rounded-xl flex-shrink-0 flex items-center justify-center"><BookOpen size={24} className="text-gray-300"/></div>
           }
           <div className="flex-1 min-w-0">
             <p className="font-serif text-xl font-bold text-[#2d2d2d] dark:text-zinc-100 leading-tight flex items-center gap-1.5">
@@ -178,13 +196,13 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
 
         <div className="flex gap-3 mt-4 flex-wrap">
           {livro.notaJovanna != null && (
-            <div className="flex items-center gap-2 bg-white dark:bg-zinc-900/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
+            <div className="flex items-center gap-2 bg-white/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
               <Star size={13} className="text-[#e07a5f]" />
               <span className="text-sm"><span className="text-[#e07a5f] font-medium">Jovanna</span> · {livro.notaJovanna}/10</span>
             </div>
           )}
           {livro.notaLeticia != null && (
-            <div className="flex items-center gap-2 bg-white dark:bg-zinc-900/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
+            <div className="flex items-center gap-2 bg-white/60 dark:bg-zinc-800/60 rounded-xl px-3 py-2">
               <Star size={13} className="text-[#81b29a]" />
               <span className="text-sm"><span className="text-[#81b29a] font-medium">Leticia</span> · {livro.notaLeticia}/10</span>
             </div>
@@ -265,6 +283,18 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
             )}
           </div>
 
+          {/* Diário da leitura */}
+          {capitulos && capitulos.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-[#9a8f8f] uppercase tracking-wider flex items-center gap-1.5"><PenLine size={13} /> Diário da leitura</p>
+              <div className="space-y-1.5">
+                {capitulos
+                  .filter(c => c.impressao_jovanna || c.impressao_leticia || c.frase_jovanna || c.frase_leticia || c.teoria_jovanna || c.teoria_leticia)
+                  .map(c => <CapituloDoDiario key={c.numero} capitulo={c} />)}
+              </div>
+            </div>
+          )}
+
           {/* Premiações */}
           {(melhorPersonagemJ || melhorPersonagemL) && (
             <CapsulaSecao label="Melhor personagem" icon={Trophy} jovanna={melhorPersonagemJ} leticia={melhorPersonagemL} />
@@ -317,7 +347,7 @@ function CapsulaDeTempo({ livro }: { livro: Livro }) {
           onClick={() => setFotoAmpliada(null)}
         >
           <img src={fotoAmpliada} alt="" className="max-w-full max-h-full rounded-2xl object-contain" />
-          <button className="absolute top-4 right-4 bg-white dark:bg-zinc-900/20 text-white rounded-full p-2">
+          <button className="absolute top-4 right-4 bg-white/20 text-white rounded-full p-2">
             <X size={20} />
           </button>
         </div>
@@ -344,6 +374,45 @@ function CapsulaSecao({ label, icon: Icon, jovanna, leticia }: { label: string; 
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function CapituloDoDiario({ capitulo: c }: { capitulo: Capitulo }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <div className="border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setAberto(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-[#2d2d2d] dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+      >
+        <span>Capítulo {c.numero}</span>
+        <ChevronDown size={14} className={`text-[#9a8f8f] transition-transform ${aberto ? "rotate-180" : ""}`} />
+      </button>
+      {aberto && (
+        <div className="p-3 pt-1 space-y-3 border-t border-gray-100 dark:border-zinc-800">
+          {(["jovanna", "leticia"] as UserId[]).map(u => {
+            const impressao = u === "jovanna" ? c.impressao_jovanna : c.impressao_leticia;
+            const frase = u === "jovanna" ? c.frase_jovanna : c.frase_leticia;
+            const teoria = u === "jovanna" ? c.teoria_jovanna : c.teoria_leticia;
+            const emocoes = u === "jovanna" ? c.emocoes_jovanna : c.emocoes_leticia;
+            if (!impressao && !frase && !teoria && !emocoes?.length) return null;
+            return (
+              <div key={u} className="space-y-1">
+                <p className="text-xs font-semibold" style={{ color: NOME_COR[u].cor }}>{NOME_COR[u].nome}</p>
+                {emocoes?.length ? <p className="text-base">{emocoes.join(" ")}</p> : null}
+                {impressao && <p className="text-xs text-gray-700 dark:text-zinc-300">{impressao}</p>}
+                {frase && <p className="text-xs italic text-gray-500 dark:text-zinc-400">&ldquo;{frase}&rdquo;</p>}
+                {teoria && (
+                  <p className="text-xs text-gray-600 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-800 rounded-lg px-2 py-1">
+                    <span className="font-medium">Teoria: </span>{teoria}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

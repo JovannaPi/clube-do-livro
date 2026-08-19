@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, BookMarked, PenLine, Lock, MessageCircle, BarChart2, Trophy, Heart, Settings, Sun, Moon } from "lucide-react";
+import { BookOpen, BookMarked, PenLine, Lock, BarChart2, Trophy, Heart, Settings, Sun, Moon } from "lucide-react";
 import { listenConfig, listenLivros } from "@/lib/db";
 import { useUsuario } from "@/hooks/useUsuario";
 import NotificacaoSino from "@/components/modules/NotificacaoSino";
@@ -11,7 +11,6 @@ import { FundoFrases } from "@/components/modules/Fundo_Frases";
 import ModuloBiblioteca   from "@/components/modules/ModuloBiblioteca";
 import ModuloDiario       from "@/components/modules/ModuloDiario";
 import ModuloSecreto      from "@/components/modules/ModuloSecreto";
-import ModuloDiscussao    from "@/components/modules/ModuloDiscussao";
 import ModuloEstatisticas from "@/components/modules/ModuloEstatisticas";
 import ModuloPremiacao    from "@/components/modules/ModuloPremiacao";
 import ModuloMemorias     from "@/components/modules/ModuloMemorias";
@@ -21,7 +20,6 @@ const TABS = [
   { id: "biblioteca",  label: "Biblioteca",  icon: BookMarked },
   { id: "diario",      label: "Diário",       icon: PenLine },
   { id: "secreto",     label: "Secreto",      icon: Lock },
-  { id: "discussao",   label: "Discussão",    icon: MessageCircle },
   { id: "stats",       label: "Estatísticas", icon: BarChart2 },
   { id: "premiacao",   label: "Premiações",   icon: Trophy },
   { id: "memorias",    label: "Memórias",     icon: Heart },
@@ -74,11 +72,10 @@ export default function Home() {
 
   const livroAtualId = usuario === "jovanna" ? config?.livroAtualIdJovanna : config?.livroAtualIdLeticia;
   const livroAtual = livros.find(l => l.id === livroAtualId);
-  const fraseIds = [config?.livroAtualIdJovanna, config?.livroAtualIdLeticia].filter(Boolean) as string[];
 
   return (
     <div className="min-h-screen flex flex-col">
-      <FundoFrases livroIds={fraseIds} />
+      <FundoFrases usuario={usuario} />
 
       {/* Header */}
       <header className="bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 sticky top-0 z-30 transition-colors duration-200">
@@ -204,11 +201,10 @@ export default function Home() {
         {tab === "biblioteca"  && <ModuloBiblioteca livros={livros} config={config} usuario={usuario} />}
         {tab === "diario"      && <ModuloDiario     livroAtual={livroAtual} usuario={usuario} />}
         {tab === "secreto"     && <ModuloSecreto    livroAtual={livroAtual} usuario={usuario} />}
-        {tab === "discussao"   && <ModuloDiscussao  livroAtual={livroAtual} usuario={usuario} />}
         {tab === "stats"       && <ModuloEstatisticas livros={livros} config={config} />}
         {tab === "premiacao"   && <ModuloPremiacao  livroAtual={livroAtual} usuario={usuario} />}
         {tab === "memorias"    && <ModuloMemorias   livros={livros} />}
-        {tab === "config"      && <ModuloConfig     config={config} livros={livros} livroAtual={livroAtual} usuario={usuario} />}
+        {tab === "config"      && <ModuloConfig     config={config} livros={livros} />}
       </main>
     </div>
   );

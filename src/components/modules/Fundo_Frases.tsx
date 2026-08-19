@@ -2,38 +2,36 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, getDocs } from "firebase/firestore";
+import { collectionGroup, getDocs } from "firebase/firestore";
+import type { UserId } from "@/types";
 
 interface Props {
-  livroIds?: string[];
+  usuario: UserId;
 }
 
-export function FundoFrases({ livroIds }: Props) {
+// Junta as frases favoritas que a própria usuária já escreveu, em qualquer
+// livro (não só o atual) — nunca as da outra, pra não vazar spoiler de um
+// trecho que ela ainda não leu (ex: quando o livro é passado de uma pra outra).
+export function FundoFrases({ usuario }: Props) {
   const [frases, setFrases] = useState<string[]>([]);
 
   useEffect(() => {
     async function carregarFrases() {
-      if (!livroIds || livroIds.length === 0) { setFrases([]); return; }
-
       try {
+        const campo = `frase_${usuario}`;
+        const snapshot = await getDocs(collectionGroup(db, "capitulos"));
+
         const listaFrases: string[] = [];
-        for (const livroId of livroIds) {
-          // Pega todos os documentos da subcoleção capitulos do livro
-          const capsRef = collection(db, "livros", livroId, "capitulos");
-          const snapshot = await getDocs(capsRef);
+        snapshot.docs.forEach(doc => {
+          const valor = doc.data()[campo];
+          if (valor && typeof valor === "string") listaFrases.push(valor);
+        });
 
-          snapshot.docs.forEach(doc => {
-            const data = doc.data();
-            // Coleta as frases da Jovanna e da Leticia, ignorando vazias
-            if (data.frase_jovanna && typeof data.frase_jovanna === "string") {
-              listaFrases.push(data.frase_jovanna);
-            }
-            if (data.frase_leticia && typeof data.frase_leticia === "string") {
-              listaFrases.push(data.frase_leticia);
-            }
-          });
+        // Embaralha pra variar quais frases aparecem a cada visita
+        for (let i = listaFrases.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [listaFrases[i], listaFrases[j]] = [listaFrases[j], listaFrases[i]];
         }
-
         setFrases(listaFrases);
       } catch (error) {
         console.error("Erro ao carregar frases de fundo:", error);
@@ -41,7 +39,7 @@ export function FundoFrases({ livroIds }: Props) {
     }
 
     carregarFrases();
-  }, [livroIds?.join(",")]);
+  }, [usuario]);
 
   if (frases.length === 0) return null;
 
